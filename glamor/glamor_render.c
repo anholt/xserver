@@ -1151,7 +1151,7 @@ glamor_composite_with_shader(CARD8 op,
                                         &key, &shader, &op_info,
                                         &saved_source_format, ca_state)) {
         glamor_fallback("glamor_composite_choose_shader failed\n");
-        return ret;
+        goto fail;
     }
     if (ca_state == CA_TWO_PASS) {
         if (!glamor_composite_choose_shader(PictOpAdd, source, mask, dest,
@@ -1161,7 +1161,7 @@ glamor_composite_with_shader(CARD8 op,
                                             &key_ca, &shader_ca, &op_info_ca,
                                             &saved_source_format, ca_state)) {
             glamor_fallback("glamor_composite_choose_shader failed\n");
-            return ret;
+            goto fail;
         }
     }
 
@@ -1293,6 +1293,13 @@ glamor_composite_with_shader(CARD8 op,
         source->format = saved_source_format;
 
     ret = TRUE;
+
+fail:
+    if (mask_pixmap && glamor_pixmap_is_memory(mask_pixmap))
+        glamor_pixmap_destroy_fbo(mask_pixmap);
+    if (source_pixmap && glamor_pixmap_is_memory(source_pixmap))
+        glamor_pixmap_destroy_fbo(source_pixmap);
+
     return ret;
 }
 
