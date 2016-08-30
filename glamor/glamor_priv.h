@@ -182,6 +182,7 @@ struct glamor_saved_procs {
     SyncScreenFuncsRec sync_screen_funcs;
 #endif
     ScreenBlockHandlerProcPtr block_handler;
+    DamageScreenFlushFunc damage_flush;
 };
 
 typedef struct glamor_screen_private {

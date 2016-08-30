@@ -94,6 +94,14 @@ DamageExtNotify(DamageExtPtr pDamageExt, BoxPtr pBoxes, int nBoxes)
     DrawablePtr pDrawable = pDamageExt->pDrawable;
     xDamageNotifyEvent ev;
     int i, x, y, w, h;
+    DamageScreenFuncsPtr screenfuncs = DamageGetScreenFuncs(pDrawable->pScreen);
+
+    /* Notify before flushing Damage events to the client.  This
+     * allows drivers doing implicit fencing to get their X rendering
+     * flushed before a 3D client doing texture_from_pixmap sees the
+     * Damage event.
+     */
+    screenfuncs->Flush(pDamageExt->pDamage);
 
     damageGetGeometry(pDrawable, &x, &y, &w, &h);
 

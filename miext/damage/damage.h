@@ -37,6 +37,7 @@ typedef enum _damageReportLevel {
     DamageReportNone
 } DamageReportLevel;
 
+typedef void (*DamageScreenFlushFunc) (DamagePtr);
 typedef void (*DamageReportFunc) (DamagePtr pDamage, RegionPtr pRegion,
                                   void *closure);
 typedef void (*DamageDestroyFunc) (DamagePtr pDamage, void *closure);
@@ -51,6 +52,7 @@ typedef struct _damageScreenFuncs {
     DamageScreenRegisterFunc Register;
     DamageScreenUnregisterFunc Unregister;
     DamageScreenDestroyFunc Destroy;
+    DamageScreenFlushFunc Flush;
 } DamageScreenFuncsRec, *DamageScreenFuncsPtr;
 
 extern _X_EXPORT void miDamageCreate(DamagePtr);

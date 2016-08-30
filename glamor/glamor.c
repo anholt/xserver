@@ -35,6 +35,8 @@
 
 #include "glamor_priv.h"
 #include "mipict.h"
+#include "damage.h"
+#include "damagestr.h"
 
 DevPrivateKeyRec glamor_screen_private_key;
 DevPrivateKeyRec glamor_pixmap_private_key;
@@ -270,6 +272,22 @@ _glamor_block_handler(ScreenPtr screen, void *timeout)
     screen->BlockHandler = _glamor_block_handler;
 }
 
+/**
+ * Called by the Damage protocol extension before writing a Damage
+ * event to the client, used to make sure that X rendering is flushed
+ * to the kernel before the client could process a damage event and
+ * try to use the results of our rendering.
+ */
+static void
+glamor_damage_flush(DamagePtr damage)
+{
+    ScreenPtr screen = damage->pDrawable->pScreen;
+    glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
+
+    glamor_make_current(glamor_priv);
+    glFlush();
+}
+
 static void
 glamor_set_debug_level(int *debug_level)
 {
@@ -354,6 +372,7 @@ static Bool
 glamor_create_screen_resources(ScreenPtr screen)
 {
     glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
+    DamageScreenFuncsPtr damage_funcs = DamageGetScreenFuncs(screen);
     Bool ret = TRUE;
 
     screen->CreateScreenResources =
@@ -361,6 +380,9 @@ glamor_create_screen_resources(ScreenPtr screen)
     if (screen->CreateScreenResources)
         ret = screen->CreateScreenResources(screen);
     screen->CreateScreenResources = glamor_create_screen_resources;
+
+    glamor_priv->saved_procs.damage_flush = damage_funcs->Flush;
+    damage_funcs->Flush = glamor_damage_flush;
 
     return ret;
 }
@@ -453,7 +475,6 @@ glamor_init(ScreenPtr screen, unsigned int flags)
     int max_viewport_size[2];
     const char *shading_version_string;
     int shading_version_offset;
-
     PictureScreenPtr ps = GetPictureScreenIfSet(screen);
 
     if (flags & ~GLAMOR_VALID_FLAGS) {
@@ -742,6 +763,7 @@ glamor_close_screen(ScreenPtr screen)
     glamor_screen_private *glamor_priv;
     PixmapPtr screen_pixmap;
     PictureScreenPtr ps = GetPictureScreenIfSet(screen);
+    DamageScreenFuncsPtr damage_funcs = DamageGetScreenFuncs(screen);
 
     glamor_priv = glamor_get_screen_private(screen);
     glamor_sync_close(screen);
@@ -765,6 +787,9 @@ glamor_close_screen(ScreenPtr screen)
     ps->Triangles = glamor_priv->saved_procs.triangles;
     ps->CompositeRects = glamor_priv->saved_procs.composite_rects;
     ps->Glyphs = glamor_priv->saved_procs.glyphs;
+
+    if (glamor_priv->saved_procs.damage_flush)
+        damage_funcs->Flush = glamor_priv->saved_procs.damage_flush;
 
     screen_pixmap = screen->GetScreenPixmap(screen);
     glamor_pixmap_destroy_fbo(screen_pixmap);

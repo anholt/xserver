@@ -1621,6 +1621,11 @@ miDamageDestroy(DamagePtr pDamage)
 {
 }
 
+static void
+miDamageFlush(DamagePtr pDamage)
+{
+}
+
 /**
  * Public functions for consumption outside this file.
  */
@@ -1632,7 +1637,8 @@ DamageSetup(ScreenPtr pScreen)
     PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
 
     const DamageScreenFuncsRec miFuncs = {
-        miDamageCreate, miDamageRegister, miDamageUnregister, miDamageDestroy
+        miDamageCreate, miDamageRegister, miDamageUnregister, miDamageDestroy,
+        miDamageFlush
     };
 
     if (!dixRegisterPrivateKey(&damageScrPrivateKeyRec, PRIVATE_SCREEN, 0))
