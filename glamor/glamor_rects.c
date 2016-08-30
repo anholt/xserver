@@ -59,6 +59,16 @@ glamor_poly_fill_rect_gl(DrawablePtr drawable,
 
     glamor_make_current(glamor_priv);
 
+    fprintf(stderr, "glamor_poly_fill_rect_gl(%d)\n", nrect);
+    if (nrect < 10) {
+        int i;
+        for (i = 0; i < nrect; i++) {
+            fprintf(stderr, "  %d,%d %d,%d\n",
+                    prect[i].x, prect[i].y,
+                    prect[i].width, prect[i].height);
+        }
+    }
+
     if (glamor_priv->glsl_version >= 130) {
         prog = glamor_use_program_fill(pixmap, gc,
                                        &glamor_priv->poly_fill_rect_program,

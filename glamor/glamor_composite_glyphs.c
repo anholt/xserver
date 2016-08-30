@@ -268,6 +268,12 @@ glamor_glyphs_flush(CARD8 op, PicturePtr src, PicturePtr dst,
              */
 
             while (nbox--) {
+                fprintf(stderr, "Drawing glyphs to %d,%d %dx%d\n",
+                        box->x1 + off_x,
+                        box->y1 + off_y,
+                        box->x2 - box->x1,
+                        box->y2 - box->y1);
+
                 glScissor(box->x1 + off_x,
                           box->y1 + off_y,
                           box->x2 - box->x1,

@@ -88,6 +88,8 @@ glamor_trapezoids(CARD8 op,
     PixmapPtr pixmap;
     pixman_image_t *image = NULL;
 
+    fprintf(stderr, "trap!\n");
+
     /* If a mask format wasn't provided, we get to choose, but behavior should
      * be as if there was no temporary mask the traps were accumulated into.
      */

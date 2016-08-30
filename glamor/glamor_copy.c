@@ -632,7 +632,21 @@ glamor_copy_gl(DrawablePtr src,
     PixmapPtr dst_pixmap = glamor_get_drawable_pixmap(dst);
     glamor_pixmap_private *src_priv = glamor_get_pixmap_private(src_pixmap);
     glamor_pixmap_private *dst_priv = glamor_get_pixmap_private(dst_pixmap);
+    int n;
+    BoxRec bounds;
+    bounds = box[0];
+    for (n = 1; n < nbox; n++) {
+        bounds.x1 = min(bounds.x1, box[n].x1);
+        bounds.y1 = min(bounds.y1, box[n].y1);
 
+        bounds.x2 = max(bounds.x2, box[n].x2);
+        bounds.y2 = max(bounds.y2, box[n].y2);
+    }
+
+    fprintf(stderr, "copyarea%s %dx%d %dx%d +%d,%d\n",
+            src == dst ? " SAME" : "",
+            bounds.x1, bounds.y1, bounds.x2 - bounds.x1, bounds.y2 - bounds.y1,
+            dx, dy);
     if (GLAMOR_PIXMAP_PRIV_HAS_FBO(dst_priv)) {
         if (GLAMOR_PIXMAP_PRIV_HAS_FBO(src_priv)) {
             if (glamor_copy_needs_temp(src, dst, box, nbox, dx, dy))

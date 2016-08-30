@@ -47,6 +47,16 @@ glamor_poly_segment_solid_gl(DrawablePtr drawable, GCPtr gc,
     int box_index;
     int add_last;
 
+    fprintf(stderr, "glamor_poly_segment_solid_gl(%d)\n", nseg);
+    if (nseg < 10) {
+        int i;
+        for (i = 0; i < nseg; i++) {
+            fprintf(stderr, "  %d,%d .. %d,%d\n",
+                    segs[i].x1, segs[i].y1,
+                    segs[i].x2, segs[i].y2);
+        }
+    }
+
     pixmap_priv = glamor_get_pixmap_private(pixmap);
     if (!GLAMOR_PIXMAP_PRIV_HAS_FBO(pixmap_priv))
         goto bail;
