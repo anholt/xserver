@@ -38,6 +38,8 @@
 #include "damage.h"
 #include "damagestr.h"
 
+#define GLAMOR_FLUSH_TIMER_MS	5
+
 DevPrivateKeyRec glamor_screen_private_key;
 DevPrivateKeyRec glamor_pixmap_private_key;
 DevPrivateKeyRec glamor_gc_private_key;
@@ -249,6 +251,10 @@ glamor_destroy_pixmap(PixmapPtr pixmap)
     return fbDestroyPixmap(pixmap);
 }
 
+/**
+ * Old external interface for glamor-using drivers before the new
+ * block/wakeup handlers were implemented.
+ */
 void
 glamor_block_handler(ScreenPtr screen)
 {
@@ -258,18 +264,56 @@ glamor_block_handler(ScreenPtr screen)
     glFlush();
 }
 
+static CARD32
+glamor_flush_timer_callback(OsTimerPtr timer, CARD32 time, void *arg)
+{
+    ScreenPtr screen = arg;
+    glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
+
+    glamor_priv->flush_timer_triggered = TRUE;
+
+    /* Disable the timer until the next BlockHandler does a flush, at
+     * which point there will be a WakeupHandler to re-arm us if
+     * rendering continues.
+     */
+    glamor_priv->flush_timer_active = FALSE;
+
+    return 0;
+}
+
+/**
+ * When X is about to (possibly) go to sleep, flush any queued
+ * rendering as long as it's been long enough since our last flush.
+ */
 static void
-_glamor_block_handler(ScreenPtr screen, void *timeout)
+glamor_real_block_handler(ScreenPtr screen, void *timeout)
 {
     glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
 
-    glamor_make_current(glamor_priv);
-    glFlush();
+    if (glamor_priv->flush_timer_triggered) {
+        glamor_make_current(glamor_priv);
+        glFlush();
+        glamor_priv->flush_timer_triggered = FALSE;
+    }
+}
 
-    screen->BlockHandler = glamor_priv->saved_procs.block_handler;
-    screen->BlockHandler(screen, timeout);
-    glamor_priv->saved_procs.block_handler = screen->BlockHandler;
-    screen->BlockHandler = _glamor_block_handler;
+/**
+ * When X wakes up to process client events, start a timer to
+ * periodically flush glamor's rendering.
+ */
+static void
+glamor_wakeup_handler(ScreenPtr screen, int result)
+{
+    glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
+
+    if (!glamor_priv->flush_timer_active) {
+        glamor_priv->flush_timer = TimerSet(glamor_priv->flush_timer,
+                                            0,
+                                            GLAMOR_FLUSH_TIMER_MS,
+                                            glamor_flush_timer_callback,
+                                            screen);
+        glamor_priv->flush_timer_active = TRUE;
+    }
 }
 
 /**
@@ -679,7 +723,9 @@ glamor_init(ScreenPtr screen, unsigned int flags)
         goto fail;
 
     glamor_priv->saved_procs.block_handler = screen->BlockHandler;
-    screen->BlockHandler = _glamor_block_handler;
+    screen->BlockHandler = glamor_real_block_handler;
+    glamor_priv->saved_procs.wakeup_handler = screen->WakeupHandler;
+    screen->WakeupHandler = glamor_wakeup_handler;
 
     if (!glamor_composite_glyphs_init(screen)) {
         ErrorF("Failed to initialize composite masks\n");
@@ -781,6 +827,7 @@ glamor_close_screen(ScreenPtr screen)
     screen->CopyWindow = glamor_priv->saved_procs.copy_window;
     screen->BitmapToRegion = glamor_priv->saved_procs.bitmap_to_region;
     screen->BlockHandler = glamor_priv->saved_procs.block_handler;
+    screen->WakeupHandler = glamor_priv->saved_procs.wakeup_handler;
 
     ps->Composite = glamor_priv->saved_procs.composite;
     ps->Trapezoids = glamor_priv->saved_procs.trapezoids;
