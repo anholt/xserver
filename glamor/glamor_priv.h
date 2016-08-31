@@ -182,6 +182,7 @@ struct glamor_saved_procs {
     SyncScreenFuncsRec sync_screen_funcs;
 #endif
     ScreenBlockHandlerProcPtr block_handler;
+    ScreenWakeupHandlerProcPtr wakeup_handler;
     DamageScreenFlushFunc damage_flush;
 };
 
@@ -294,6 +295,10 @@ typedef struct glamor_screen_private {
 
     /* xv */
     glamor_program xv_prog;
+
+    OsTimerPtr flush_timer;
+    Bool flush_timer_active;
+    Bool flush_timer_triggered;
 
     struct glamor_context ctx;
 } glamor_screen_private;
