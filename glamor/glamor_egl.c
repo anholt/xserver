@@ -746,6 +746,11 @@ static void glamor_egl_cleanup(struct glamor_egl_screen_private *glamor_egl)
     if (glamor_egl->display != EGL_NO_DISPLAY) {
         eglMakeCurrent(glamor_egl->display,
                        EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        /*
+         * Force the next glamor_make_current call to update the context
+         * (on hot unplug another GPU may still be using glamor)
+         */
+        lastGLContext = NULL;
         eglTerminate(glamor_egl->display);
     }
 #ifdef GLAMOR_HAS_GBM
@@ -874,6 +879,11 @@ glamor_egl_init(ScrnInfoPtr scrn, int fd)
                    "Failed to make EGL context current\n");
         goto error;
     }
+    /*
+     * Force the next glamor_make_current call to set the right context
+     * (in case of multiple GPUs using glamor)
+     */
+    lastGLContext = NULL;
 #ifdef GLAMOR_HAS_GBM
     if (epoxy_has_egl_extension(glamor_egl->display,
                                 "EGL_KHR_gl_texture_2D_image") &&
