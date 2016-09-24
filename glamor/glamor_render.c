@@ -519,8 +519,11 @@ glamor_set_composite_texture(glamor_screen_private *glamor_priv, int unit,
     glamor_pixmap_fbo *fbo = pixmap_priv->fbo;
     float wh[4];
     int repeat_type;
+    enum glamor_sampler sampler;
 
     glamor_make_current(glamor_priv);
+
+    repeat_type = picture->repeatType;
 
     /* The red channel swizzling doesn't depend on whether we're using
      * 'fbo' as source or mask as we must have the same answer in case
@@ -530,23 +533,19 @@ glamor_set_composite_texture(glamor_screen_private *glamor_priv, int unit,
      */
     glamor_bind_texture(glamor_priv, GL_TEXTURE0 + unit, fbo,
                         glamor_fbo_red_is_alpha(glamor_priv, dest_priv->fbo));
-    repeat_type = picture->repeatType;
+
     switch (picture->repeatType) {
     case RepeatNone:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        sampler = GLAMOR_SAMPLER_NEAREST_BORDER;
         break;
     case RepeatNormal:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        sampler = GLAMOR_SAMPLER_NEAREST_REPEAT;
         break;
     case RepeatPad:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        sampler = GLAMOR_SAMPLER_NEAREST_EDGE;
         break;
     case RepeatReflect:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+        sampler = GLAMOR_SAMPLER_NEAREST_MIRRORED_REPEAT;
         break;
     }
 
@@ -554,16 +553,15 @@ glamor_set_composite_texture(glamor_screen_private *glamor_priv, int unit,
     default:
     case PictFilterFast:
     case PictFilterNearest:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         break;
     case PictFilterGood:
     case PictFilterBest:
     case PictFilterBilinear:
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        sampler += GLAMOR_SAMPLER_LINEAR_EDGE - GLAMOR_SAMPLER_NEAREST_EDGE;
         break;
     }
+
+    glamor_set_sampler(glamor_priv, unit, sampler);
 
     /* Handle RepeatNone in the shader when the source is missing the
      * alpha channel, as GL will return an alpha for 1 if the texture
@@ -1308,6 +1306,10 @@ disable_va:
     glDisableVertexAttribArray(GLAMOR_VERTEX_SOURCE);
     glDisableVertexAttribArray(GLAMOR_VERTEX_MASK);
     glDisable(GL_BLEND);
+
+    glamor_reset_sampler(glamor_priv, 0);
+    glamor_reset_sampler(glamor_priv, 1);
+
     DEBUGF("finish rendering.\n");
     if (saved_source_format)
         source->format = saved_source_format;

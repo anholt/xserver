@@ -126,7 +126,15 @@ _glamor_create_tex(glamor_screen_private *glamor_priv,
 
     glamor_make_current(glamor_priv);
     glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
+
+    /* Even though all of glamor rendering uses sampler objects, we
+     * still set these parameters on the texture object's internal
+     * sampler state so that when we TexImage it we get a single-level
+     * texture.  When we eventually use TexStorage, we won't need
+     * this.
+     */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     if (format == glamor_priv->one_channel_format && format == GL_RED)
