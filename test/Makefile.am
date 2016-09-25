@@ -170,6 +170,7 @@ EXTRA_DIST = \
 	$(SCRIPT_TESTS) \
 	scripts/xinit-piglit-session.sh \
 	scripts/run-piglit.sh \
+	scripts/xephyr-glamor-on-host.sh \
 	ddxstubs.c \
 	$(NULL)
 
