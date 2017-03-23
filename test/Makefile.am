@@ -7,6 +7,7 @@ tests_CPPFLAGS=
 CLEANFILES=
 
 tests_SOURCES = \
+        $(top_srcdir)/mi/miinitext.c \
         tests-common.c \
 	tests-common.h \
         list.c \
@@ -139,7 +140,6 @@ tests_LDADD += \
             $(top_builddir)/hw/xfree86/common/libcommon.la \
             $(top_builddir)/hw/xfree86/os-support/libxorgos.la \
             $(top_builddir)/hw/xfree86/parser/libxf86config.la \
-            $(top_builddir)/hw/xfree86/dixmods/libdixmods.la \
             $(top_builddir)/hw/xfree86/modes/libxf86modes.la \
             $(top_builddir)/hw/xfree86/ramdac/libramdac.la \
             $(top_builddir)/hw/xfree86/ddc/libddc.la \
