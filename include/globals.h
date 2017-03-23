@@ -7,27 +7,27 @@
 
 /* Global X server variables that are visible to mi, dix, os, and ddx */
 
-extern XORG_EXPORT CARD32 defaultScreenSaverTime;
-extern XORG_EXPORT CARD32 defaultScreenSaverInterval;
-extern XORG_EXPORT CARD32 ScreenSaverTime;
-extern XORG_EXPORT CARD32 ScreenSaverInterval;
+extern XORG_EXPORT_VAR CARD32 defaultScreenSaverTime;
+extern XORG_EXPORT_VAR CARD32 defaultScreenSaverInterval;
+extern XORG_EXPORT_VAR CARD32 ScreenSaverTime;
+extern XORG_EXPORT_VAR CARD32 ScreenSaverInterval;
 
 #ifdef SCREENSAVER
-extern XORG_EXPORT Bool screenSaverSuspended;
+extern XORG_EXPORT_VAR Bool screenSaverSuspended;
 #endif
 
-extern XORG_EXPORT const char *defaultFontPath;
-extern XORG_EXPORT int monitorResolution;
-extern XORG_EXPORT int defaultColorVisualClass;
+extern XORG_EXPORT_VAR const char *defaultFontPath;
+extern XORG_EXPORT_VAR int monitorResolution;
+extern XORG_EXPORT_VAR int defaultColorVisualClass;
 
-extern XORG_EXPORT int GrabInProgress;
-extern XORG_EXPORT Bool noTestExtensions;
-extern XORG_EXPORT char *SeatId;
-extern XORG_EXPORT char *ConnectionInfo;
-extern XORG_EXPORT sig_atomic_t inSignalContext;
+extern XORG_EXPORT_VAR int GrabInProgress;
+extern XORG_EXPORT_VAR Bool noTestExtensions;
+extern XORG_EXPORT_VAR char *SeatId;
+extern XORG_EXPORT_VAR char *ConnectionInfo;
+extern XORG_EXPORT_VAR sig_atomic_t inSignalContext;
 
 #ifdef PANORAMIX
-extern XORG_EXPORT Bool PanoramiXExtensionDisabledHack;
+extern XORG_EXPORT_VAR Bool PanoramiXExtensionDisabledHack;
 #endif
 
 #ifdef XSELINUX
@@ -35,7 +35,7 @@ extern XORG_EXPORT Bool PanoramiXExtensionDisabledHack;
 #define SELINUX_MODE_DISABLED   1
 #define SELINUX_MODE_PERMISSIVE 2
 #define SELINUX_MODE_ENFORCING  3
-extern XORG_EXPORT int selinuxEnforcingState;
+extern XORG_EXPORT_VAR int selinuxEnforcingState;
 #endif
 
 #endif                          /* !_XSERV_GLOBAL_H_ */
