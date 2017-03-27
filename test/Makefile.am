@@ -138,6 +138,7 @@ nodist_tests_SOURCES = sdksyms.c
 tests_LDADD += \
             $(top_builddir)/hw/xfree86/loader/libloader.la \
             $(top_builddir)/hw/xfree86/common/libcommon.la \
+            $(top_builddir)/hw/xfree86/common/libxv.la \
             $(top_builddir)/hw/xfree86/os-support/libxorgos.la \
             $(top_builddir)/hw/xfree86/parser/libxf86config.la \
             $(top_builddir)/hw/xfree86/modes/libxf86modes.la \
