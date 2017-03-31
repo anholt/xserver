@@ -404,14 +404,11 @@ endif
 # Common static libraries of all X servers
 libxserver = [
     libxserver_mi,
-    libxserver_dix,
 
     libxserver_composite,
     libxserver_damageext,
     libxserver_dbe,
-    libxserver_randr,
     libxserver_miext_damage,
-    libxserver_render,
     libxserver_present,
     libxserver_xext,
     libxserver_miext_sync,
@@ -420,9 +417,13 @@ libxserver = [
     libxserver_xkb,
     libxserver_record,
 
+    libxserver_dix,
+    libxserver_randr,
+    libxserver_render,
     libxserver_os,
 ]
 
 libxserver += libxserver_dri3
 
 subdir('hw')
+subdir('test')
