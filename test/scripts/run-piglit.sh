@@ -39,9 +39,9 @@ if test "x$SERVER_COMMAND" = "x"; then
 fi
 
 $XSERVER_BUILDDIR/test/simple-xinit \
-    $XSERVER_DIR/test/scripts/xinit-piglit-session.sh \
+    $SERVER_COMMAND \
     -- \
-    $SERVER_COMMAND
+    $XSERVER_DIR/test/scripts/xinit-piglit-session.sh
 
 # Write out piglit-summaries.
 SHORT_SUMMARY=$PIGLIT_RESULTS_DIR/summary

@@ -56,7 +56,7 @@ kill_server(int server_pid)
 static void
 usage(int argc, char **argv)
 {
-    fprintf(stderr, "%s <client command> -- <server command>\n", argv[0]);
+    fprintf(stderr, "%s <server command> -- <client command>\n", argv[0]);
     exit(1);
 }
 
@@ -155,29 +155,39 @@ parse_args(int argc, char **argv,
      * NULLs, and also the -displayfd and fd number.
      */
     char **args_storage = calloc(argc + 2, sizeof(char *));
-    char *const *client_args;
-    char *const *server_args = NULL;
+    char *const *client_args = NULL;
+    char *const *server_args;
     char **next_arg = args_storage;
-    bool parsing_client = true;
+    bool parsing_server = true;
     int i, ret;
     char *displayfd_string;
 
     if (!args_storage)
         exit(1);
 
-    client_args = args_storage;
+    server_args = args_storage;
     for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--") == 0) {
-            if (!parsing_client)
-                usage(argc, argv);
+        if (parsing_server && strcmp(argv[i], "--") == 0) {
 
-            /* Cap the client list */
+            /* Give the server -displayfd X */
+            *next_arg = (char *)"-displayfd";
+            next_arg++;
+
+            ret = asprintf(&displayfd_string, "%d", displayfd);
+            if (ret < 0) {
+                fprintf(stderr, "asprintf fail\n");
+                exit(1);
+            }
+            *next_arg = displayfd_string;
+            next_arg++;
+
+            /* Cap the server list */
             *next_arg = NULL;
             next_arg++;
 
             /* Move to adding into server_args. */
-            server_args = next_arg;
-            parsing_client = false;
+            client_args = next_arg;
+            parsing_server = false;
             continue;
         }
 
@@ -187,18 +197,6 @@ parse_args(int argc, char **argv,
 
     if (client_args[0] == NULL || !server_args || server_args[0] == NULL)
         usage(argc, argv);
-
-    /* Give the server -displayfd X */
-    *next_arg = (char *)"-displayfd";
-    next_arg++;
-
-    ret = asprintf(&displayfd_string, "%d", displayfd);
-    if (ret < 0) {
-        fprintf(stderr, "asprintf fail\n");
-        exit(1);
-    }
-    *next_arg = displayfd_string;
-    next_arg++;
 
     *out_client_args = client_args;
     *out_server_args = server_args;
