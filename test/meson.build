@@ -57,3 +57,11 @@ monolithic_tests = executable(
 
 # Disable the test for now.  It fails linking on Travis CI.
 # test('monolithic', monolithic_tests)
+
+test('monolithic', monolithic_tests)
+
+simple_xinit = executable(
+    'simple-xinit',
+    'simple-xinit.c',
+    include_directories: inc,
+)
