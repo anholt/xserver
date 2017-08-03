@@ -324,6 +324,31 @@ bswap_32(uint32_t x)
             ((x & 0x000000FF) << 24));
 }
 
+static inline Bool
+checked_int64_add(int64_t *out, int64_t a, int64_t b)
+{
+    int64_t result = a + b;
+    /* signed addition overflows if operands have the same sign, and
+     * the sign of the result doesn't match the sign of the inputs.
+     */
+    Bool overflow = (a < 0) == (b < 0) && (a < 0) != (result < 0);
+
+    *out = result;
+
+    return overflow;
+}
+
+static inline Bool
+checked_int64_subtract(int64_t *out, int64_t a, int64_t b)
+{
+    int64_t result = a - b;
+    Bool overflow = (a < 0) != (b < 0) && (a < 0) != (result < 0);
+
+    *out = result;
+
+    return overflow;
+}
+
 #define swapl(x) do { \
 		if (sizeof(*(x)) != 4) \
 			wrong_size(); \
