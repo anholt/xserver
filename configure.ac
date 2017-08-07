@@ -754,7 +754,6 @@ FIXESPROTO="fixesproto >= 5.0"
 DAMAGEPROTO="damageproto >= 1.1"
 XCMISCPROTO="xcmiscproto >= 1.2.0"
 BIGREQSPROTO="bigreqsproto >= 1.1.0"
-XTRANS="xtrans >= 1.3.5"
 PRESENTPROTO="presentproto >= 1.0"
 
 dnl List of libraries that require a specific version
@@ -824,10 +823,10 @@ if test "x$INPUTTHREAD" = "xyes" ; then
     LIBS="$save_LIBS"
 fi
 
-REQUIRED_MODULES="$FIXESPROTO $DAMAGEPROTO $XCMISCPROTO $XTRANS $BIGREQSPROTO $SDK_REQUIRED_MODULES"
+REQUIRED_MODULES="$FIXESPROTO $DAMAGEPROTO $XCMISCPROTO $BIGREQSPROTO $SDK_REQUIRED_MODULES"
 
 dnl systemd socket activation
-dnl activate the code in libxtrans that grabs systemd's socket fds
+dnl activate the code in xtrans that grabs systemd's socket fds
 dnl libsystemd-daemon was moved into libsystemd in version 209
 LIBSYSTEMD="libsystemd >= 209"
 AC_ARG_WITH([systemd-daemon],

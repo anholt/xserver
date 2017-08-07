@@ -25,7 +25,6 @@ fixesproto_dep = dependency('fixesproto', version: '>= 5.0')
 damageproto_dep = dependency('damageproto', version: '>= 1.1')
 xcmiscproto_dep = dependency('xcmiscproto', version: '>= 1.2.0')
 bigreqsproto_dep = dependency('bigreqsproto', version: '>= 1.1.0')
-xtrans_dep = dependency('xtrans', version: '>= 1.3.5')
 
 videoproto_dep = dependency('videoproto')
 compositeproto_dep = dependency('compositeproto', version: '>= 0.4')
@@ -313,7 +312,6 @@ common_dep = [
     damageproto_dep,
     xcmiscproto_dep,
     bigreqsproto_dep,
-    xtrans_dep,
 
     videoproto_dep,
     compositeproto_dep,

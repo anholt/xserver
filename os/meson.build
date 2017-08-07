@@ -12,9 +12,9 @@ srcs_os = [
     'osinit.c',
     'ospoll.c',
     'utils.c',
+    'transport.c',
     'xdmauth.c',
     'xsha1.c',
-    'xstrans.c',
     'xprintf.c',
     'log.c',
 ]

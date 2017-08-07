@@ -47,12 +47,20 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_DIX_CONFIG_H
+#include <dix-config.h>
+#endif
+
+#include <X11/Xfuncproto.h>
 #include <stdlib.h>
 
+#define TRANS_REOPEN
+#define TRANS_SERVER
+#define XSERV_t
 #define XTRANS_TRANSPORT_C  /* used to flag Xtransint.h that it's being used
 			       here, not just #included in another file */
 
-#include "Xtransint.h"
+#include "xtransint.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -61,13 +69,13 @@ from The Open Group.
 #endif
 
 #ifdef LOCALCONN
-#include "Xtranslcl.c"
+#include "xtranslcl.c"
 #endif
 #if defined(TCPCONN) || defined(UNIXCONN)
-#include "Xtranssock.c"
+#include "xtranssock.c"
 #endif
-#include "Xtrans.c"
-#include "Xtransutil.c"
+#include "xtrans.c"
+#include "xtransutil.c"
 
 #ifdef __clang__
 #pragma clang diagnostic pop

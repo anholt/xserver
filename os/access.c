@@ -89,12 +89,12 @@ SOFTWARE.
 #define XSERV_t
 #define TRANS_SERVER
 #define TRANS_REOPEN
-#include <X11/Xtrans/Xtrans.h>
 #include <X11/Xauth.h>
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include "misc.h"
 #include "site.h"
+#include "xtrans.h"
 #include <errno.h>
 #include <sys/types.h>
 #ifndef WIN32

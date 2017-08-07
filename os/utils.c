@@ -77,9 +77,9 @@ __stdcall unsigned long GetTickCount(void);
 #define XSERV_t
 #define TRANS_SERVER
 #define TRANS_REOPEN
-#include <X11/Xtrans/Xtrans.h>
-#include "input.h"
 #include "dixfont.h"
+#include "input.h"
+#include "xtrans.h"
 #include <X11/fonts/libxfont2.h>
 #include "osdep.h"
 #include "extension.h"

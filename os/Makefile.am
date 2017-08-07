@@ -24,10 +24,10 @@ libos_la_SOURCES = 	\
 	osinit.c	\
 	ospoll.c	\
 	ospoll.h	\
+	transport.c	\
 	utils.c		\
 	xdmauth.c	\
 	xsha1.c		\
-	xstrans.c	\
 	xprintf.c	\
 	$(XORG_SRCS)
 libos_la_LIBADD = @SHA1_LIBS@ $(DLOPEN_LIBS) $(LTLIBOBJS)

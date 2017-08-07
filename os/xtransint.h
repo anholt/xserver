@@ -76,7 +76,7 @@ from The Open Group.
 # define _WILLWINSOCK_
 #endif
 
-#include "Xtrans.h"
+#include "xtrans.h"
 
 #ifndef _X_UNUSED  /* Defined in Xfuncproto.h in xproto >= 7.0.22 */
 # define _X_UNUSED  /* */
