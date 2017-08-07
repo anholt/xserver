@@ -286,9 +286,9 @@ typedef struct _Xtransport_table {
 
 #ifdef WIN32
 
-#define READV(ciptr, iov, iovcnt)	TRANS(ReadV)(ciptr, iov, iovcnt)
+#define READV(ciptr, iov, iovcnt)	TransReadV(ciptr, iov, iovcnt)
 
-static	int TRANS(ReadV)(
+static	int TransReadV(
     XtransConnInfo,	/* ciptr */
     struct iovec *,	/* iov */
     int			/* iovcnt */
@@ -303,9 +303,9 @@ static	int TRANS(ReadV)(
 
 #ifdef WIN32
 
-#define WRITEV(ciptr, iov, iovcnt)	TRANS(WriteV)(ciptr, iov, iovcnt)
+#define WRITEV(ciptr, iov, iovcnt)	TransWriteV(ciptr, iov, iovcnt)
 
-static int TRANS(WriteV)(
+static int TransWriteV(
     XtransConnInfo,	/* ciptr */
     struct iovec *,	/* iov */
     int 		/* iovcnt */
@@ -350,7 +350,7 @@ prmsg(int lvl, const char *f, ...)
     if (lvl <= XTRANSDEBUG) {
 	int saveerrno = errno;
 
-	ErrorF("%s", __xtransname);
+	ErrorF("Trans");
 	VErrorF(f, args);
 
 # ifdef XTRANSDEBUGTIMESTAMP

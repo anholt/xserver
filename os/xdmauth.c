@@ -271,9 +271,9 @@ XdmAuthorizationValidate(unsigned char *plain, int length,
         int family, addr_len;
         Xtransaddr *addr;
 
-        if (_XSERVTransGetPeerAddr(((OsCommPtr) xclient->osPrivate)->trans_conn,
-                                   &family, &addr_len, &addr) == 0
-            && _XSERVTransConvertAddress(&family, &addr_len, &addr) == 0) {
+        if (TransGetPeerAddr(((OsCommPtr) xclient->osPrivate)->trans_conn,
+                             &family, &addr_len, &addr) == 0
+            && TransConvertAddress(&family, &addr_len, &addr) == 0) {
 #if defined(TCPCONN)
             if (family == FamilyInternet &&
                 memcmp((char *) addr, client->client, 4) != 0) {

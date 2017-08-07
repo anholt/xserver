@@ -227,9 +227,9 @@ TryCreateSocket(int num, int *partial)
 
     snprintf(port, sizeof(port), "%d", num);
 
-    return (_XSERVTransMakeAllCOTSServerListeners(port, partial,
-                                                  &ListenTransCount,
-                                                  &ListenTransConns) >= 0);
+    return (TransMakeAllCOTSServerListeners(port, partial,
+                                            &ListenTransCount,
+                                            &ListenTransConns) >= 0);
 }
 
 /*****************
@@ -277,12 +277,12 @@ CreateWellKnownSockets(void)
         FatalError ("Failed to create listening socket array");
 
     for (i = 0; i < ListenTransCount; i++) {
-        int fd = _XSERVTransGetConnectionNumber(ListenTransConns[i]);
+        int fd = TransGetConnectionNumber(ListenTransConns[i]);
 
         ListenTransFds[i] = fd;
         SetNotifyFd(fd, QueueNewConnections, X_NOTIFY_READ, NULL);
 
-        if (!_XSERVTransIsLocal(ListenTransConns[i]))
+        if (!TransIsLocal(ListenTransConns[i]))
             DefineSelf (fd);
     }
 
@@ -313,7 +313,7 @@ ResetWellKnownSockets(void)
     ResetOsBuffers();
 
     for (i = 0; i < ListenTransCount; i++) {
-        int status = _XSERVTransResetListener(ListenTransConns[i]);
+        int status = TransResetListener(ListenTransConns[i]);
 
         if (status != TRANS_RESET_NOOP) {
             if (status == TRANS_RESET_FAILURE) {
@@ -333,7 +333,7 @@ ResetWellKnownSockets(void)
                  * A new file descriptor was allocated (the old one was closed)
                  */
 
-                int newfd = _XSERVTransGetConnectionNumber(ListenTransConns[i]);
+                int newfd = TransGetConnectionNumber(ListenTransConns[i]);
 
                 ListenTransFds[i] = newfd;
             }
@@ -359,7 +359,7 @@ CloseWellKnownConnections(void)
 
     for (i = 0; i < ListenTransCount; i++) {
         if (ListenTransConns[i] != NULL) {
-            _XSERVTransClose(ListenTransConns[i]);
+            TransClose(ListenTransConns[i]);
             ListenTransConns[i] = NULL;
             if (ListenTransFds != NULL)
                 RemoveNotifyFd(ListenTransFds[i]);
@@ -532,7 +532,7 @@ ClientAuthorized(ClientPtr client,
     }
 
     if (auth_id == (XID) ~0L) {
-        if (_XSERVTransGetPeerAddr(trans_conn, &family, &fromlen, &from) != -1) {
+        if (TransGetPeerAddr(trans_conn, &family, &fromlen, &from) != -1) {
             if (InvalidHost((struct sockaddr *) from, fromlen, client))
                 AuthAudit(client, FALSE, (struct sockaddr *) from,
                           fromlen, proto_n, auth_proto, auth_id);
@@ -564,7 +564,7 @@ ClientAuthorized(ClientPtr client,
     else if (auditTrailLevel > 1)
 #endif
     {
-        if (_XSERVTransGetPeerAddr(trans_conn, &family, &fromlen, &from) != -1) {
+        if (TransGetPeerAddr(trans_conn, &family, &fromlen, &from) != -1) {
             AuthAudit(client, TRUE, (struct sockaddr *) from, fromlen,
                       proto_n, auth_proto, auth_id);
 
@@ -679,12 +679,12 @@ EstablishNewConnections(ClientPtr clientUnused, void *closure)
     if ((trans_conn = lookup_trans_conn(curconn)) == NULL)
         return TRUE;
 
-    if ((new_trans_conn = _XSERVTransAccept(trans_conn, &status)) == NULL)
+    if ((new_trans_conn = TransAccept(trans_conn, &status)) == NULL)
         return TRUE;
 
-    newconn = _XSERVTransGetConnectionNumber(new_trans_conn);
+    newconn = TransGetConnectionNumber(new_trans_conn);
 
-    _XSERVTransSetOption(new_trans_conn, TRANS_NONBLOCKING, 1);
+    TransSetOption(new_trans_conn, TRANS_NONBLOCKING, 1);
 
     if (trans_conn->flags & TRANS_NOXAUTH)
         new_trans_conn->flags = new_trans_conn->flags | TRANS_NOXAUTH;
@@ -715,7 +715,7 @@ ConnMaxNotify(int fd, int events, void *data)
     char order = 0;
 
     /* try to read the byte-order of the connection */
-    (void) _XSERVTransRead(trans_conn, &order, 1);
+    (void) TransRead(trans_conn, &order, 1);
     if (order == 'l' || order == 'B' || order == 'r' || order == 'R') {
         xConnSetupPrefix csp;
         char pad[3] = { 0, 0, 0 };
@@ -739,17 +739,17 @@ ConnMaxNotify(int fd, int events, void *data)
         iov[1].iov_base = (void *) NOROOM;
         iov[2].iov_len = (4 - (csp.lengthReason & 3)) & 3;
         iov[2].iov_base = pad;
-        (void) _XSERVTransWritev(trans_conn, iov, 3);
+        (void) TransWritev(trans_conn, iov, 3);
     }
     RemoveNotifyFd(trans_conn->fd);
-    _XSERVTransClose(trans_conn);
+    TransClose(trans_conn);
 }
 
 static void
 ErrorConnMax(XtransConnInfo trans_conn)
 {
     if (!SetNotifyFd(trans_conn->fd, ConnMaxNotify, X_NOTIFY_READ, trans_conn))
-        _XSERVTransClose(trans_conn);
+        TransClose(trans_conn);
 }
 
 /************
@@ -766,8 +766,8 @@ CloseDownFileDescriptor(OsCommPtr oc)
         XdmcpCloseDisplay(connection);
 #endif
         ospoll_remove(server_poll, connection);
-        _XSERVTransDisconnect(oc->trans_conn);
-        _XSERVTransClose(oc->trans_conn);
+        TransDisconnect(oc->trans_conn);
+        TransClose(oc->trans_conn);
         oc->trans_conn = NULL;
         oc->fd = -1;
     }
@@ -1005,7 +1005,7 @@ ListenOnOpenFD(int fd, int noxauth)
     /* Make our XtransConnInfo
      * TRANS_SOCKET_LOCAL_INDEX = 5 from Xtrans.c
      */
-    ciptr = _XSERVTransReopenCOTSServer(5, fd, port);
+    ciptr = TransReopenCOTSServer(5, fd, port);
     if (ciptr == NULL) {
         ErrorF("Got NULL while trying to Reopen listen port.\n");
         return;
@@ -1031,7 +1031,7 @@ ListenOnOpenFD(int fd, int noxauth)
     ListenTransCount++;
 }
 
-/* based on TRANS(SocketUNIXAccept) (XtransConnInfo ciptr, int *status) */
+/* based on TransSocketUNIXAccept(XtransConnInfo ciptr, int *status) */
 Bool
 AddClientOnOpenFD(int fd)
 {
@@ -1040,11 +1040,11 @@ AddClientOnOpenFD(int fd)
     char port[20];
 
     snprintf(port, sizeof(port), ":%d", atoi(display));
-    ciptr = _XSERVTransReopenCOTSServer(5, fd, port);
+    ciptr = TransReopenCOTSServer(5, fd, port);
     if (ciptr == NULL)
         return FALSE;
 
-    _XSERVTransSetOption(ciptr, TRANS_NONBLOCKING, 1);
+    TransSetOption(ciptr, TRANS_NONBLOCKING, 1);
     ciptr->flags |= TRANS_NOXAUTH;
 
     connect_time = GetTimeInMillis();

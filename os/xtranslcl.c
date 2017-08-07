@@ -114,7 +114,7 @@ from The Open Group.
 # define LOCAL_TRANS_SCO
 #endif
 
-static int TRANS(LocalClose)(XtransConnInfo ciptr);
+static int TransLocalClose(XtransConnInfo ciptr);
 
 /*
  * These functions actually implement the local connection mechanisms.
@@ -123,41 +123,37 @@ static int TRANS(LocalClose)(XtransConnInfo ciptr);
 /* Type Not Supported */
 
 static int
-TRANS(OpenFail)(XtransConnInfo ciptr _X_UNUSED, const char *port _X_UNUSED)
-
+TransOpenFail(XtransConnInfo ciptr _X_UNUSED, const char *port _X_UNUSED)
 {
     return -1;
 }
 
 static int
-TRANS(ReopenFail)(XtransConnInfo ciptr _X_UNUSED, int fd _X_UNUSED,
-                  const char *port _X_UNUSED)
-
+TransReopenFail(XtransConnInfo ciptr _X_UNUSED, int fd _X_UNUSED,
+                const char *port _X_UNUSED)
 {
     return 0;
 }
 
 #if XTRANS_SEND_FDS
 static int
-TRANS(LocalRecvFdInvalid)(XtransConnInfo ciptr)
+TransLocalRecvFdInvalid(XtransConnInfo ciptr)
 {
     errno = EINVAL;
     return -1;
 }
 
 static int
-TRANS(LocalSendFdInvalid)(XtransConnInfo ciptr, int fd, int do_close)
+TransLocalSendFdInvalid(XtransConnInfo ciptr, int fd, int do_close)
 {
     errno = EINVAL;
     return -1;
 }
 #endif
 
-
 static int
-TRANS(FillAddrInfo)(XtransConnInfo ciptr,
-                    const char *sun_path, const char *peer_sun_path)
-
+TransFillAddrInfo(XtransConnInfo ciptr,
+                  const char *sun_path, const char *peer_sun_path)
 {
     struct sockaddr_un	*sunaddr;
     struct sockaddr_un	*p_sunaddr;
@@ -261,8 +257,7 @@ static void _dummy(int sig _X_UNUSED)
 #ifdef LOCAL_TRANS_PTS
 
 static int
-TRANS(PTSOpenServer)(XtransConnInfo ciptr, const char *port)
-
+TransPTSOpenServer(XtransConnInfo ciptr, const char *port)
 {
 #ifdef PTSNODENAME
     int fd, server;
@@ -353,7 +348,7 @@ TRANS(PTSOpenServer)(XtransConnInfo ciptr, const char *port)
      * Everything looks good: fill in the XtransConnInfo structure.
      */
 
-    if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
+    if (TransFillAddrInfo(ciptr, server_path, server_path) == 0)
     {
 	prmsg(1,"PTSOpenServer: failed to fill in addr info\n");
 	close(fd);
@@ -366,8 +361,7 @@ TRANS(PTSOpenServer)(XtransConnInfo ciptr, const char *port)
 }
 
 static int
-TRANS(PTSAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
-
+TransPTSAccept(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 {
     int			newfd;
     int			in;
@@ -459,7 +453,7 @@ TRANS(PTSAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 /* NAMED */
 #ifdef NAMEDNODENAME
 static int
-TRANS(NAMEDOpenPipe)(const char *server_path)
+TransNAMEDOpenPipe(const char *server_path)
 {
     int			fd, pipefd[2];
     struct stat		sbuf;
@@ -519,7 +513,7 @@ TRANS(NAMEDOpenPipe)(const char *server_path)
 #endif
 
 static int
-TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, const char *port)
+TransNAMEDOpenServer(XtransConnInfo ciptr, const char *port)
 {
 #ifdef NAMEDNODENAME
     int			fd;
@@ -544,7 +538,7 @@ TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, const char *port)
 		       NAMEDNODENAME, (long)getpid());
     }
 
-    fd = TRANS(NAMEDOpenPipe)(server_path);
+    fd = TransNAMEDOpenPipe(server_path);
     if (fd < 0) {
 	return -1;
     }
@@ -553,10 +547,10 @@ TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, const char *port)
      * Everything looks good: fill in the XtransConnInfo structure.
      */
 
-    if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
+    if (TransFillAddrInfo(ciptr, server_path, server_path) == 0)
     {
 	prmsg(1,"NAMEDOpenServer: failed to fill in addr info\n");
-	TRANS(LocalClose)(ciptr);
+	TransLocalClose(ciptr);
 	return -1;
     }
 
@@ -566,8 +560,7 @@ TRANS(NAMEDOpenServer)(XtransConnInfo ciptr, const char *port)
 }
 
 static int
-TRANS(NAMEDResetListener) (XtransConnInfo ciptr)
-
+TransNAMEDResetListener(XtransConnInfo ciptr)
 {
   struct sockaddr_un      *sockname=(struct sockaddr_un *) ciptr->addr;
   struct stat     statb;
@@ -582,8 +575,8 @@ TRANS(NAMEDResetListener) (XtransConnInfo ciptr)
     if (stat (sockname->sun_path, &statb) == -1 ||
 	(statb.st_mode & S_IFMT) != S_IFIFO) {
       prmsg(3, "Pipe %s trashed, recreating\n", sockname->sun_path);
-      TRANS(LocalClose)(ciptr);
-      ciptr->fd = TRANS(NAMEDOpenPipe)(sockname->sun_path);
+      TransLocalClose(ciptr);
+      ciptr->fd = TransNAMEDOpenPipe(sockname->sun_path);
       if (ciptr->fd >= 0)
 	  return TRANS_RESET_NEW_FD;
       else
@@ -594,8 +587,7 @@ TRANS(NAMEDResetListener) (XtransConnInfo ciptr)
 }
 
 static int
-TRANS(NAMEDAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
-
+TransNAMEDAccept(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 {
     struct strrecvfd str;
 
@@ -713,7 +705,7 @@ named_spipe(int fd, char *path)
  */
 
 static int
-TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
+TransSCOOpenServer(XtransConnInfo ciptr, const char *port)
 {
 #ifdef SCORNODENAME
     char		serverR_path[64];
@@ -806,7 +798,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
 #if defined(__SCO__)
     ciptr->flags |= TRANS_NOUNLINK;
 #endif
-    if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0) {
+    if (TransFillAddrInfo(ciptr, serverS_path, serverR_path) == 0) {
 	prmsg(1,"SCOOpenServer: failed to fill in addr info\n");
 	close(fds);
 	close(fdr);
@@ -819,7 +811,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
 }
 
 static int
-TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
+TransSCOAccept(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 {
     char		c;
     int			fd;
@@ -885,8 +877,7 @@ TRANS(SCOAccept)(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 #ifdef LOCAL_TRANS_PTS
 
 static int
-TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
-
+TransPTSReopenServer(XtransConnInfo ciptr, int fd, const char *port)
 {
 #ifdef PTSNODENAME
     char server_path[64];
@@ -910,7 +901,7 @@ TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
 		PTSNODENAME, (long)getpid());
     }
 
-    if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
+    if (TransFillAddrInfo(ciptr, server_path, server_path) == 0)
     {
 	prmsg(1,"PTSReopenServer: failed to fill in addr info\n");
 	return 0;
@@ -926,8 +917,7 @@ TRANS(PTSReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
 #ifdef LOCAL_TRANS_NAMED
 
 static int
-TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd _X_UNUSED, const char *port)
-
+TransNAMEDReopenServer(XtransConnInfo ciptr, int fd _X_UNUSED, const char *port)
 {
 #ifdef NAMEDNODENAME
     char server_path[64];
@@ -951,7 +941,7 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd _X_UNUSED, const char *por
 		NAMEDNODENAME, (long)getpid());
     }
 
-    if (TRANS(FillAddrInfo) (ciptr, server_path, server_path) == 0)
+    if (TransFillAddrInfo(ciptr, server_path, server_path) == 0)
     {
 	prmsg(1,"NAMEDReopenServer: failed to fill in addr info\n");
 	return 0;
@@ -967,8 +957,7 @@ TRANS(NAMEDReopenServer)(XtransConnInfo ciptr, int fd _X_UNUSED, const char *por
 
 #ifdef LOCAL_TRANS_SCO
 static int
-TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
-
+TransSCOReopenServer(XtransConnInfo ciptr, int fd, const char *port)
 {
 #ifdef SCORNODENAME
     char serverR_path[64], serverS_path[64];
@@ -988,7 +977,7 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
 #if defined(__SCO__)
     ciptr->flags |= TRANS_NOUNLINK;
 #endif
-    if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0)
+    if (TransFillAddrInfo(ciptr, serverS_path, serverR_path) == 0)
     {
 	prmsg(1, "SCOReopenServer: failed to fill in addr info\n");
 	return 0;
@@ -1043,69 +1032,69 @@ typedef struct _LOCALtrans2dev {
 static LOCALtrans2dev LOCALtrans2devtab[] = {
 #ifdef LOCAL_TRANS_PTS
 {"",
-     TRANS(PTSOpenServer),
-     TRANS(OpenFail),
-     TRANS(PTSReopenServer),
-     TRANS(ReopenFail),
+     TransPTSOpenServer,
+     TransOpenFail,
+     TransPTSReopenServer,
+     TransReopenFail,
      NULL,		/* ResetListener */
-     TRANS(PTSAccept)
+     TransPTSAccept
 },
 
 {"local",
-     TRANS(PTSOpenServer),
-     TRANS(OpenFail),
-     TRANS(PTSReopenServer),
-     TRANS(ReopenFail),
+     TransPTSOpenServer,
+     TransOpenFail,
+     TransPTSReopenServer,
+     TransReopenFail,
      NULL,		/* ResetListener */
-     TRANS(PTSAccept)
+     TransPTSAccept
 },
 
 {"pts",
-     TRANS(PTSOpenServer),
-     TRANS(OpenFail),
-     TRANS(PTSReopenServer),
-     TRANS(ReopenFail),
+     TransPTSOpenServer,
+     TransOpenFail,
+     TransPTSReopenServer,
+     TransReopenFail,
      NULL,		/* ResetListener */
-     TRANS(PTSAccept)
+     TransPTSAccept
 },
 #else /* !LOCAL_TRANS_PTS */
 {"",
-     TRANS(NAMEDOpenServer),
-     TRANS(OpenFail),
-     TRANS(NAMEDReopenServer),
-     TRANS(ReopenFail),
-     TRANS(NAMEDResetListener),
-     TRANS(NAMEDAccept)
+     TransNAMEDOpenServer,
+     TransOpenFail,
+     TransNAMEDReopenServer,
+     TransReopenFail,
+     TransNAMEDResetListener,
+     TransNAMEDAccept
 },
 
 {"local",
-     TRANS(NAMEDOpenServer),
-     TRANS(OpenFail),
-     TRANS(NAMEDReopenServer),
-     TRANS(ReopenFail),
-     TRANS(NAMEDResetListener),
-     TRANS(NAMEDAccept)
+     TransNAMEDOpenServer,
+     TransOpenFail,
+     TransNAMEDReopenServer,
+     TransReopenFail,
+     TransNAMEDResetListener,
+     TransNAMEDAccept
 },
 #endif /* !LOCAL_TRANS_PTS */
 
 #ifdef LOCAL_TRANS_NAMED
 {"named",
-     TRANS(NAMEDOpenServer),
-     TRANS(OpenFail),
-     TRANS(NAMEDReopenServer),
-     TRANS(ReopenFail),
-     TRANS(NAMEDResetListener),
-     TRANS(NAMEDAccept)
+     TransNAMEDOpenServer,
+     TransOpenFail,
+     TransNAMEDReopenServer,
+     TransReopenFail,
+     TransNAMEDResetListener,
+     TransNAMEDAccept
 },
 
 #ifdef __sun /* Alias "pipe" to named, since that's what Solaris called it */
 {"pipe",
-     TRANS(NAMEDOpenServer),
-     TRANS(OpenFail),
-     TRANS(NAMEDReopenServer),
-     TRANS(ReopenFail),
-     TRANS(NAMEDResetListener),
-     TRANS(NAMEDAccept)
+     TransNAMEDOpenServer,
+     TransOpenFail,
+     TransNAMEDReopenServer,
+     TransReopenFail,
+     TransNAMEDResetListener,
+     TransNAMEDAccept
 },
 #endif /* __sun */
 #endif /* LOCAL_TRANS_NAMED */
@@ -1113,12 +1102,12 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 
 #ifdef LOCAL_TRANS_SCO
 {"sco",
-     TRANS(SCOOpenServer),
-     TRANS(OpenFail),
-     TRANS(SCOReopenServer),
-     TRANS(ReopenFail),
+     TransSCOOpenServer,
+     TransOpenFail,
+     TransSCOReopenServer,
+     TransReopenFail,
      NULL,		/* ResetListener */
-     TRANS(SCOAccept)
+     TransSCOAccept
 },
 #endif /* LOCAL_TRANS_SCO */
 };
@@ -1140,8 +1129,7 @@ static	char	*freeXLOCAL=NULL;
 #endif
 
 static void
-TRANS(LocalInitTransports)(const char *protocol)
-
+TransLocalInitTransports(const char *protocol)
 {
     prmsg(3,"LocalInitTransports(%s)\n", protocol);
 
@@ -1158,8 +1146,7 @@ TRANS(LocalInitTransports)(const char *protocol)
 }
 
 static void
-TRANS(LocalEndTransports)(void)
-
+TransLocalEndTransports(void)
 {
     prmsg(3,"LocalEndTransports()\n");
     free(freeXLOCAL);
@@ -1168,9 +1155,8 @@ TRANS(LocalEndTransports)(void)
 #define TYPEBUFSIZE	32
 
 static XtransConnInfo
-TRANS(LocalOpenServer)(int type, const char *protocol,
+TransLocalOpenServer(int type, const char *protocol,
                        const char *host _X_UNUSED, const char *port)
-
 {
     int	i;
     XtransConnInfo ciptr;
@@ -1221,8 +1207,7 @@ TRANS(LocalOpenServer)(int type, const char *protocol,
 }
 
 static XtransConnInfo
-TRANS(LocalReopenServer)(int type, int index, int fd, const char *port)
-
+TransLocalReopenServer(int type, int index, int fd, const char *port)
 {
     XtransConnInfo ciptr;
     int stat = 0;
@@ -1264,9 +1249,8 @@ TRANS(LocalReopenServer)(int type, int index, int fd, const char *port)
  */
 
 static XtransConnInfo
-TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, const char *protocol,
-			   const char *host, const char *port)
-
+TransLocalOpenCOTSServer(Xtransport *thistrans, const char *protocol,
+                         const char *host, const char *port)
 {
     char *typetocheck = NULL;
     int found = 0;
@@ -1275,7 +1259,7 @@ TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, const char *protocol,
     prmsg(2,"LocalOpenCOTSServer(%s,%s,%s)\n",protocol,host,port);
 
     /* Check if this local type is in the XLOCAL list */
-    TRANS(LocalInitTransports)("local");
+    TransLocalInitTransports("local");
     typetocheck = workingXLOCAL;
     while (typetocheck && !found) {
 	int j;
@@ -1291,7 +1275,7 @@ TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, const char *protocol,
 	    found = 1;
 	typetocheck = workingXLOCAL;
     }
-    TRANS(LocalEndTransports)();
+    TransLocalEndTransports();
 
     if (!found) {
 	prmsg(3,"LocalOpenCOTSServer: disabling %s\n",thistrans->TransName);
@@ -1299,12 +1283,11 @@ TRANS(LocalOpenCOTSServer)(Xtransport *thistrans, const char *protocol,
 	return NULL;
     }
 
-    return TRANS(LocalOpenServer)(XTRANS_OPEN_COTS_SERVER, protocol, host, port);
+    return TransLocalOpenServer(XTRANS_OPEN_COTS_SERVER, protocol, host, port);
 }
 
 static XtransConnInfo
-TRANS(LocalReopenCOTSServer)(Xtransport *thistrans, int fd, const char *port)
-
+TransLocalReopenCOTSServer(Xtransport *thistrans, int fd, const char *port)
 {
     int index;
 
@@ -1322,13 +1305,12 @@ TRANS(LocalReopenCOTSServer)(Xtransport *thistrans, int fd, const char *port)
 	return (NULL);
     }
 
-    return TRANS(LocalReopenServer)(XTRANS_OPEN_COTS_SERVER,
+    return TransLocalReopenServer(XTRANS_OPEN_COTS_SERVER,
 	index, fd, port);
 }
 
 static int
-TRANS(LocalSetOption)(XtransConnInfo ciptr, int option, int arg)
-
+TransLocalSetOption(XtransConnInfo ciptr, int option, int arg)
 {
     prmsg(2,"LocalSetOption(%d,%d,%d)\n",ciptr->fd,option,arg);
 
@@ -1336,9 +1318,8 @@ TRANS(LocalSetOption)(XtransConnInfo ciptr, int option, int arg)
 }
 
 static int
-TRANS(LocalCreateListener)(XtransConnInfo ciptr, const char *port,
-                           unsigned int flags _X_UNUSED)
-
+TransLocalCreateListener(XtransConnInfo ciptr, const char *port,
+                         unsigned int flags _X_UNUSED)
 {
     prmsg(2,"LocalCreateListener(%p->%d,%s)\n",ciptr,ciptr->fd,port);
 
@@ -1346,8 +1327,7 @@ TRANS(LocalCreateListener)(XtransConnInfo ciptr, const char *port,
 }
 
 static int
-TRANS(LocalResetListener)(XtransConnInfo ciptr)
-
+TransLocalResetListener(XtransConnInfo ciptr)
 {
     LOCALtrans2dev	*transptr;
 
@@ -1362,8 +1342,7 @@ TRANS(LocalResetListener)(XtransConnInfo ciptr)
 
 
 static XtransConnInfo
-TRANS(LocalAccept)(XtransConnInfo ciptr, int *status)
-
+TransLocalAccept(XtransConnInfo ciptr, int *status)
 {
     XtransConnInfo	newciptr;
     LOCALtrans2dev	*transptr;
@@ -1397,8 +1376,7 @@ TRANS(LocalAccept)(XtransConnInfo ciptr, int *status)
 }
 
 static int
-TRANS(LocalBytesReadable)(XtransConnInfo ciptr, BytesReadable_t *pend )
-
+TransLocalBytesReadable(XtransConnInfo ciptr, BytesReadable_t *pend )
 {
     prmsg(2,"LocalBytesReadable(%p->%d,%p)\n", ciptr, ciptr->fd, pend);
 
@@ -1410,7 +1388,7 @@ TRANS(LocalBytesReadable)(XtransConnInfo ciptr, BytesReadable_t *pend )
 }
 
 static int
-TRANS(LocalRead)(XtransConnInfo ciptr, char *buf, int size)
+TransLocalRead(XtransConnInfo ciptr, char *buf, int size)
 
 {
     prmsg(2,"LocalRead(%d,%p,%d)\n", ciptr->fd, buf, size );
@@ -1419,8 +1397,7 @@ TRANS(LocalRead)(XtransConnInfo ciptr, char *buf, int size)
 }
 
 static int
-TRANS(LocalWrite)(XtransConnInfo ciptr, char *buf, int size)
-
+TransLocalWrite(XtransConnInfo ciptr, char *buf, int size)
 {
     prmsg(2,"LocalWrite(%d,%p,%d)\n", ciptr->fd, buf, size );
 
@@ -1428,8 +1405,7 @@ TRANS(LocalWrite)(XtransConnInfo ciptr, char *buf, int size)
 }
 
 static int
-TRANS(LocalReadv)(XtransConnInfo ciptr, struct iovec *buf, int size)
-
+TransLocalReadv(XtransConnInfo ciptr, struct iovec *buf, int size)
 {
     prmsg(2,"LocalReadv(%d,%p,%d)\n", ciptr->fd, buf, size );
 
@@ -1437,8 +1413,7 @@ TRANS(LocalReadv)(XtransConnInfo ciptr, struct iovec *buf, int size)
 }
 
 static int
-TRANS(LocalWritev)(XtransConnInfo ciptr, struct iovec *buf, int size)
-
+TransLocalWritev(XtransConnInfo ciptr, struct iovec *buf, int size)
 {
     prmsg(2,"LocalWritev(%d,%p,%d)\n", ciptr->fd, buf, size );
 
@@ -1446,8 +1421,7 @@ TRANS(LocalWritev)(XtransConnInfo ciptr, struct iovec *buf, int size)
 }
 
 static int
-TRANS(LocalDisconnect)(XtransConnInfo ciptr)
-
+TransLocalDisconnect(XtransConnInfo ciptr)
 {
     prmsg(2,"LocalDisconnect(%p->%d)\n", ciptr, ciptr->fd);
 
@@ -1455,8 +1429,7 @@ TRANS(LocalDisconnect)(XtransConnInfo ciptr)
 }
 
 static int
-TRANS(LocalClose)(XtransConnInfo ciptr)
-
+TransLocalClose(XtransConnInfo ciptr)
 {
     struct sockaddr_un      *sockname=(struct sockaddr_un *) ciptr->addr;
     int	ret;
@@ -1478,8 +1451,7 @@ TRANS(LocalClose)(XtransConnInfo ciptr)
 }
 
 static int
-TRANS(LocalCloseForCloning)(XtransConnInfo ciptr)
-
+TransLocalCloseForCloning(XtransConnInfo ciptr)
 {
     int ret;
 
@@ -1516,139 +1488,139 @@ static const char * local_aliases[] = {
 # endif
 				  NULL };
 
-Xtransport	TRANS(LocalFuncs) = {
+Xtransport	TransLocalFuncs = {
 	/* Local Interface */
 	"local",
 	TRANS_ALIAS | TRANS_LOCAL,
 	local_aliases,
-	TRANS(LocalOpenCOTSServer),
-	TRANS(LocalReopenCOTSServer),
-	TRANS(LocalSetOption),
-	TRANS(LocalCreateListener),
-	TRANS(LocalResetListener),
-	TRANS(LocalAccept),
-	TRANS(LocalBytesReadable),
-	TRANS(LocalRead),
-	TRANS(LocalWrite),
-	TRANS(LocalReadv),
-	TRANS(LocalWritev),
+	TransLocalOpenCOTSServer,
+	TransLocalReopenCOTSServer,
+	TransLocalSetOption,
+	TransLocalCreateListener,
+	TransLocalResetListener,
+	TransLocalAccept,
+	TransLocalBytesReadable,
+	TransLocalRead,
+	TransLocalWrite,
+	TransLocalReadv,
+	TransLocalWritev,
 #if XTRANS_SEND_FDS
-	TRANS(LocalSendFdInvalid),
-	TRANS(LocalRecvFdInvalid),
+	TransLocalSendFdInvalid,
+	TransLocalRecvFdInvalid,
 #endif
-	TRANS(LocalDisconnect),
-	TRANS(LocalClose),
-	TRANS(LocalCloseForCloning),
+	TransLocalDisconnect,
+	TransLocalClose,
+	TransLocalCloseForCloning,
 };
 
 #ifdef LOCAL_TRANS_PTS
 
-Xtransport	TRANS(PTSFuncs) = {
+Xtransport	TransPTSFuncs = {
 	/* Local Interface */
 	"pts",
 	TRANS_LOCAL,
 	NULL,
-	TRANS(LocalOpenCOTSServer),
-	TRANS(LocalReopenCOTSServer),
-	TRANS(LocalSetOption),
-	TRANS(LocalCreateListener),
-	TRANS(LocalResetListener),
-	TRANS(LocalAccept),
-	TRANS(LocalBytesReadable),
-	TRANS(LocalRead),
-	TRANS(LocalWrite),
-	TRANS(LocalReadv),
-	TRANS(LocalWritev),
+	TransLocalOpenCOTSServer,
+	TransLocalReopenCOTSServer,
+	TransLocalSetOption,
+	TransLocalCreateListener,
+	TransLocalResetListener,
+	TransLocalAccept,
+	TransLocalBytesReadable,
+	TransLocalRead,
+	TransLocalWrite,
+	TransLocalReadv,
+	TransLocalWritev,
 #if XTRANS_SEND_FDS
-	TRANS(LocalSendFdInvalid),
-	TRANS(LocalRecvFdInvalid),
+	TransLocalSendFdInvalid,
+	TransLocalRecvFdInvalid,
 #endif
-	TRANS(LocalDisconnect),
-	TRANS(LocalClose),
-	TRANS(LocalCloseForCloning),
+	TransLocalDisconnect,
+	TransLocalClose,
+	TransLocalCloseForCloning,
 };
 
 #endif /* LOCAL_TRANS_PTS */
 
 #ifdef LOCAL_TRANS_NAMED
 
-Xtransport	TRANS(NAMEDFuncs) = {
+Xtransport	TransNAMEDFuncs = {
 	/* Local Interface */
 	"named",
 	TRANS_LOCAL,
 	NULL,
-	TRANS(LocalOpenCOTSServer),
-	TRANS(LocalReopenCOTSServer),
-	TRANS(LocalSetOption),
-	TRANS(LocalCreateListener),
-	TRANS(LocalResetListener),
-	TRANS(LocalAccept),
-	TRANS(LocalBytesReadable),
-	TRANS(LocalRead),
-	TRANS(LocalWrite),
-	TRANS(LocalReadv),
-	TRANS(LocalWritev),
+	TransLocalOpenCOTSServer,
+	TransLocalReopenCOTSServer,
+	TransLocalSetOption,
+	TransLocalCreateListener,
+	TransLocalResetListener,
+	TransLocalAccept,
+	TransLocalBytesReadable,
+	TransLocalRead,
+	TransLocalWrite,
+	TransLocalReadv,
+	TransLocalWritev,
 #if XTRANS_SEND_FDS
-	TRANS(LocalSendFdInvalid),
-	TRANS(LocalRecvFdInvalid),
+	TransLocalSendFdInvalid,
+	TransLocalRecvFdInvalid,
 #endif
-	TRANS(LocalDisconnect),
-	TRANS(LocalClose),
-	TRANS(LocalCloseForCloning),
+	TransLocalDisconnect,
+	TransLocalClose,
+	TransLocalCloseForCloning,
 };
 
 #ifdef __sun
-Xtransport	TRANS(PIPEFuncs) = {
+Xtransport	TransPIPEFuncs = {
 	/* Local Interface */
 	"pipe",
 	TRANS_ALIAS | TRANS_LOCAL,
 	NULL,
-	TRANS(LocalOpenCOTSServer),
-	TRANS(LocalReopenCOTSServer),
-	TRANS(LocalSetOption),
-	TRANS(LocalCreateListener),
-	TRANS(LocalResetListener),
-	TRANS(LocalAccept),
-	TRANS(LocalBytesReadable),
-	TRANS(LocalRead),
-	TRANS(LocalWrite),
-	TRANS(LocalReadv),
-	TRANS(LocalWritev),
+	TransLocalOpenCOTSServer,
+	TransLocalReopenCOTSServer,
+	TransLocalSetOption,
+	TransLocalCreateListener,
+	TransLocalResetListener,
+	TransLocalAccept,
+	TransLocalBytesReadable,
+	TransLocalRead,
+	TransLocalWrite,
+	TransLocalReadv,
+	TransLocalWritev,
 #if XTRANS_SEND_FDS
-	TRANS(LocalSendFdInvalid),
-	TRANS(LocalRecvFdInvalid),
+	TransLocalSendFdInvalid,
+	TransLocalRecvFdInvalid,
 #endif
-	TRANS(LocalDisconnect),
-	TRANS(LocalClose),
-	TRANS(LocalCloseForCloning),
+	TransLocalDisconnect,
+	TransLocalClose,
+	TransLocalCloseForCloning,
 };
 #endif /* __sun */
 #endif /* LOCAL_TRANS_NAMED */
 
 
 #ifdef LOCAL_TRANS_SCO
-Xtransport	TRANS(SCOFuncs) = {
+Xtransport	TransSCOFuncs = {
 	/* Local Interface */
 	"sco",
 	TRANS_LOCAL,
 	NULL,
-	TRANS(LocalOpenCOTSServer),
-	TRANS(LocalReopenCOTSServer),
-	TRANS(LocalSetOption),
-	TRANS(LocalCreateListener),
-	TRANS(LocalResetListener),
-	TRANS(LocalAccept),
-	TRANS(LocalBytesReadable),
-	TRANS(LocalRead),
-	TRANS(LocalWrite),
-	TRANS(LocalReadv),
-	TRANS(LocalWritev),
+	TransLocalOpenCOTSServer,
+	TransLocalReopenCOTSServer,
+	TransLocalSetOption,
+	TransLocalCreateListener,
+	TransLocalResetListener,
+	TransLocalAccept,
+	TransLocalBytesReadable,
+	TransLocalRead,
+	TransLocalWrite,
+	TransLocalReadv,
+	TransLocalWritev,
 #if XTRANS_SEND_FDS
-	TRANS(LocalSendFdInvalid),
-	TRANS(LocalRecvFdInvalid),
+	TransLocalSendFdInvalid,
+	TransLocalRecvFdInvalid,
 #endif
-	TRANS(LocalDisconnect),
-	TRANS(LocalClose),
-	TRANS(LocalCloseForCloning),
+	TransLocalDisconnect,
+	TransLocalClose,
+	TransLocalCloseForCloning,
 };
 #endif /* LOCAL_TRANS_SCO */

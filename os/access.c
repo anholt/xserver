@@ -1093,7 +1093,7 @@ xtransLocalClient(ClientPtr client)
     if (!oc->trans_conn)
         return FALSE;
 
-    if (!_XSERVTransGetPeerAddr(oc->trans_conn, &notused, &alen, &from)) {
+    if (!TransGetPeerAddr(oc->trans_conn, &notused, &alen, &from)) {
         family = ConvertAddr((struct sockaddr *) from,
                              &alen, (void **) &addr);
         if (family == -1) {
@@ -1184,7 +1184,7 @@ GetLocalClientCreds(ClientPtr client, LocalClientCredRec ** lccp)
      * domain sockets - Solaris getpeerucred can work with a bit more, so
      * we just let it tell us if the connection type is supported or not
      */
-    if (!_XSERVTransIsLocal(ci)) {
+    if (!TransIsLocal(ci)) {
         return -1;
     }
 #endif
@@ -1194,7 +1194,7 @@ GetLocalClientCreds(ClientPtr client, LocalClientCredRec ** lccp)
         return -1;
     lcc = *lccp;
 
-    fd = _XSERVTransGetConnectionNumber(ci);
+    fd = TransGetConnectionNumber(ci);
 #ifdef HAVE_GETPEEREID
     if (getpeereid(fd, &uid, &gid) == -1) {
         FreeLocalClientCreds(lcc);
@@ -1619,7 +1619,7 @@ ClientIsLocal(ClientPtr client)
 {
     XtransConnInfo ci = ((OsCommPtr) client->osPrivate)->trans_conn;
 
-    return _XSERVTransIsLocal(ci);
+    return TransIsLocal(ci);
 }
 
 /*****************************************************************************

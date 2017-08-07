@@ -346,7 +346,7 @@ ReadRequestFromClient(ClientPtr client)
             YieldControlDeath();
             return -1;
         }
-        result = _XSERVTransRead(oc->trans_conn, oci->buffer + oci->bufcnt,
+        result = TransRead(oc->trans_conn, oci->buffer + oci->bufcnt,
                                  oci->size - oci->bufcnt);
         if (result <= 0) {
             if ((result < 0) && ETEST(errno)) {
@@ -408,7 +408,7 @@ ReadRequestFromClient(ClientPtr client)
     if (oci->ignoreBytes > 0) {
         assert(needed == oci->ignoreBytes || needed == oci->size);
         /*
-         * The _XSERVTransRead call above may return more or fewer bytes than we
+         * The TransRead call above may return more or fewer bytes than we
          * want to ignore.  Ignore the smaller of the two sizes.
          */
         if (gotnow < needed) {
@@ -466,7 +466,7 @@ ReadFdFromClient(ClientPtr client)
         OsCommPtr oc = (OsCommPtr) client->osPrivate;
 
         --client->req_fds;
-        fd = _XSERVTransRecvFd(oc->trans_conn);
+        fd = TransRecvFd(oc->trans_conn);
     } else
         LogMessage(X_ERROR, "Request asks for FD without setting req_fds\n");
     return fd;
@@ -477,7 +477,7 @@ WriteFdToClient(ClientPtr client, int fd, Bool do_close)
 {
     OsCommPtr oc = (OsCommPtr) client->osPrivate;
 
-    return _XSERVTransSendFd(oc->trans_conn, fd, do_close);
+    return TransSendFd(oc->trans_conn, fd, do_close);
 }
 #endif
 
@@ -866,7 +866,7 @@ FlushClient(ClientPtr who, OsCommPtr oc, const void *__extraBuf, int extraCount)
             InsertIOV(padBuffer, padsize)
 
             errno = 0;
-        if (trans_conn && (len = _XSERVTransWritev(trans_conn, iov, i)) >= 0) {
+        if (trans_conn && (len = TransWritev(trans_conn, iov, i)) >= 0) {
             written += len;
             notWritten -= len;
             todo = notWritten;

@@ -43,13 +43,13 @@
 void
 winGetDisplayName(char *szDisplay, unsigned int screen)
 {
-    if (_XSERVTransIsListening("local")) {
+    if (TransIsListening("local")) {
         snprintf(szDisplay, 512, ":%s.%d", display, screen);
     }
-    else if (_XSERVTransIsListening("inet")) {
+    else if (TransIsListening("inet")) {
         snprintf(szDisplay, 512, "127.0.0.1:%s.%d", display, screen);
     }
-    else if (_XSERVTransIsListening("inet6")) {
+    else if (TransIsListening("inet6")) {
         snprintf(szDisplay, 512, "::1:%s.%d", display, screen);
     }
     else {

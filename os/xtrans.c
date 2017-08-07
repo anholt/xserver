@@ -86,31 +86,31 @@ from The Open Group.
 static
 Xtransport_table Xtransports[] = {
 #if defined(TCPCONN)
-    { &TRANS(SocketTCPFuncs),	TRANS_SOCKET_TCP_INDEX },
+    { &TransSocketTCPFuncs,	TRANS_SOCKET_TCP_INDEX },
 #if defined(IPv6) && defined(AF_INET6)
-    { &TRANS(SocketINET6Funcs),	TRANS_SOCKET_INET6_INDEX },
+    { &TransSocketINET6Funcs,	TRANS_SOCKET_INET6_INDEX },
 #endif /* IPv6 */
-    { &TRANS(SocketINETFuncs),	TRANS_SOCKET_INET_INDEX },
+    { &TransSocketINETFuncs,	TRANS_SOCKET_INET_INDEX },
 #endif /* TCPCONN */
 #if defined(UNIXCONN)
 #if !defined(LOCALCONN)
-    { &TRANS(SocketLocalFuncs),	TRANS_SOCKET_LOCAL_INDEX },
+    { &TransSocketLocalFuncs,	TRANS_SOCKET_LOCAL_INDEX },
 #endif /* !LOCALCONN */
-    { &TRANS(SocketUNIXFuncs),	TRANS_SOCKET_UNIX_INDEX },
+    { &TransSocketUNIXFuncs,	TRANS_SOCKET_UNIX_INDEX },
 #endif /* UNIXCONN */
 #if defined(LOCALCONN)
-    { &TRANS(LocalFuncs),	TRANS_LOCAL_LOCAL_INDEX },
+    { &TransLocalFuncs,	TRANS_LOCAL_LOCAL_INDEX },
 #ifndef __sun
-    { &TRANS(PTSFuncs),		TRANS_LOCAL_PTS_INDEX },
+    { &TransPTSFuncs,		TRANS_LOCAL_PTS_INDEX },
 #endif /* __sun */
 #if defined(SVR4) || defined(__SVR4)
-    { &TRANS(NAMEDFuncs),	TRANS_LOCAL_NAMED_INDEX },
+    { &TransNAMEDFuncs,	TRANS_LOCAL_NAMED_INDEX },
 #endif
 #ifdef __sun
-    { &TRANS(PIPEFuncs),	TRANS_LOCAL_PIPE_INDEX },
+    { &TransPIPEFuncs,	TRANS_LOCAL_PIPE_INDEX },
 #endif /* __sun */
 #if defined(__SCO__) || defined(__UNIXWARE__)
-    { &TRANS(SCOFuncs),		TRANS_LOCAL_SCO_INDEX },
+    { &TransSCOFuncs,		TRANS_LOCAL_SCO_INDEX },
 #endif /* __SCO__ || __UNIXWARE__ */
 #endif /* LOCALCONN */
 };
@@ -129,8 +129,7 @@ Xtransport_table Xtransports[] = {
  */
 
 void
-TRANS(FreeConnInfo) (XtransConnInfo ciptr)
-
+TransFreeConnInfo(XtransConnInfo ciptr)
 {
     prmsg (3,"FreeConnInfo(%p)\n", ciptr);
 
@@ -150,8 +149,7 @@ TRANS(FreeConnInfo) (XtransConnInfo ciptr)
 #define PROTOBUFSIZE	20
 
 static Xtransport *
-TRANS(SelectTransport) (const char *protocol)
-
+TransSelectTransport(const char *protocol)
 {
     char 	protobuf[PROTOBUFSIZE];
     int		i;
@@ -182,9 +180,8 @@ TRANS(SelectTransport) (const char *protocol)
 }
 
 static int
-TRANS(ParseAddress) (const char *address,
-                     char **protocol, char **host, char **port)
-
+TransParseAddress(const char *address,
+                  char **protocol, char **host, char **port)
 {
     /*
      * For the font library, the address is a string formatted
@@ -285,7 +282,7 @@ TRANS(ParseAddress) (const char *address,
     _host_len = strlen(_host);
     if (_host_len == 0)
     {
-	TRANS(GetHostname) (hostnamebuf, sizeof (hostnamebuf));
+	TransGetHostname(hostnamebuf, sizeof (hostnamebuf));
 	_host = hostnamebuf;
     }
 #if defined(IPv6) && defined(AF_INET6)
@@ -369,14 +366,13 @@ TRANS(ParseAddress) (const char *address,
 
 
 /*
- * TRANS(Open) does all of the real work opening a connection. The only
+ * TransOpen does all of the real work opening a connection. The only
  * funny part about this is the type parameter which is used to decide which
  * type of open to perform.
  */
 
 static XtransConnInfo
-TRANS(Open) (int type, const char *address)
-
+TransOpen(int type, const char *address)
 {
     char 		*protocol = NULL, *host = NULL, *port = NULL;
     XtransConnInfo	ciptr = NULL;
@@ -385,7 +381,7 @@ TRANS(Open) (int type, const char *address)
     prmsg (2,"Open(%d,%s)\n", type, address);
 
 #if defined(WIN32) && defined(TCPCONN)
-    if (TRANS(WSAStartup)())
+    if (TransWSAStartup())
     {
 	prmsg (1,"Open: WSAStartup failed\n");
 	return NULL;
@@ -394,7 +390,7 @@ TRANS(Open) (int type, const char *address)
 
     /* Parse the Address */
 
-    if (TRANS(ParseAddress) (address, &protocol, &host, &port) == 0)
+    if (TransParseAddress(address, &protocol, &host, &port) == 0)
     {
 	prmsg (1,"Open: Unable to Parse address %s\n", address);
 	return NULL;
@@ -402,7 +398,7 @@ TRANS(Open) (int type, const char *address)
 
     /* Determine the transport type */
 
-    if ((thistrans = TRANS(SelectTransport) (protocol)) == NULL)
+    if ((thistrans = TransSelectTransport(protocol)) == NULL)
     {
 	prmsg (1,"Open: Unable to find transport for %s\n",
 	       protocol);
@@ -440,7 +436,7 @@ TRANS(Open) (int type, const char *address)
     }
 
     ciptr->transptr = thistrans;
-    ciptr->port = port;			/* We need this for TRANS(Reopen) */
+    ciptr->port = port;			/* We need this for TransReopen */
 
     free (protocol);
     free (host);
@@ -455,8 +451,7 @@ TRANS(Open) (int type, const char *address)
  */
 
 static XtransConnInfo
-TRANS(Reopen) (int type, int trans_id, int fd, const char *port)
-
+TransReopen(int type, int trans_id, int fd, const char *port)
 {
     XtransConnInfo	ciptr = NULL;
     Xtransport		*thistrans = NULL;
@@ -520,25 +515,22 @@ TRANS(Reopen) (int type, int trans_id, int fd, const char *port)
  */
 
 XtransConnInfo
-TRANS(OpenCOTSServer) (const char *address)
-
+TransOpenCOTSServer(const char *address)
 {
     prmsg (2,"OpenCOTSServer(%s)\n", address);
-    return TRANS(Open) (XTRANS_OPEN_COTS_SERVER, address);
+    return TransOpen(XTRANS_OPEN_COTS_SERVER, address);
 }
 
 XtransConnInfo
-TRANS(ReopenCOTSServer) (int trans_id, int fd, const char *port)
-
+TransReopenCOTSServer(int trans_id, int fd, const char *port)
 {
     prmsg (2,"ReopenCOTSServer(%d, %d, %s)\n", trans_id, fd, port);
-    return TRANS(Reopen) (XTRANS_OPEN_COTS_SERVER, trans_id, fd, port);
+    return TransReopen(XTRANS_OPEN_COTS_SERVER, trans_id, fd, port);
 }
 
 int
-TRANS(GetReopenInfo) (XtransConnInfo ciptr,
-		      int *trans_id, int *fd, char **port)
-
+TransGetReopenInfo(XtransConnInfo ciptr,
+                   int *trans_id, int *fd, char **port)
 {
     int i;
 
@@ -558,8 +550,7 @@ TRANS(GetReopenInfo) (XtransConnInfo ciptr,
 }
 
 int
-TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
-
+TransSetOption(XtransConnInfo ciptr, int option, int arg)
 {
     int	fd = ciptr->fd;
     int	ret = 0;
@@ -606,7 +597,7 @@ TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
 	    int arg;
 #endif
 	    arg = 1;
-/* IBM TCP/IP understands this option too well: it causes TRANS(Read) to fail
+/* IBM TCP/IP understands this option too well: it causes TransRead to fail
  * eventually with EWOULDBLOCK */
 	    ret = ioctl (fd, FIONBIO, &arg);
 	}
@@ -641,22 +632,20 @@ TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
 }
 
 int
-TRANS(CreateListener) (XtransConnInfo ciptr, const char *port, unsigned int flags)
-
+TransCreateListener(XtransConnInfo ciptr, const char *port, unsigned int flags)
 {
     return ciptr->transptr->CreateListener (ciptr, port, flags);
 }
 
 int
-TRANS(Received) (const char * protocol)
-
+TransReceived(const char * protocol)
 {
    Xtransport *trans;
    int i = 0, ret = 0;
 
    prmsg (5, "Received(%s)\n", protocol);
 
-   if ((trans = TRANS(SelectTransport)(protocol)) == NULL)
+   if ((trans = TransSelectTransport(protocol)) == NULL)
    {
 	prmsg (1,"Received: unable to find transport: %s\n",
 	       protocol);
@@ -666,7 +655,7 @@ TRANS(Received) (const char * protocol)
    if (trans->flags & TRANS_ALIAS) {
        if (trans->nolisten)
 	   while (trans->nolisten[i]) {
-	       ret |= TRANS(Received)(trans->nolisten[i]);
+	       ret |= TransReceived(trans->nolisten[i]);
 	       i++;
        }
    }
@@ -676,13 +665,12 @@ TRANS(Received) (const char * protocol)
 }
 
 int
-TRANS(NoListen) (const char * protocol)
-
+TransNoListen(const char * protocol)
 {
    Xtransport *trans;
    int i = 0, ret = 0;
 
-   if ((trans = TRANS(SelectTransport)(protocol)) == NULL)
+   if ((trans = TransSelectTransport(protocol)) == NULL)
    {
 	prmsg (1,"TransNoListen: unable to find transport: %s\n",
 	       protocol);
@@ -692,7 +680,7 @@ TRANS(NoListen) (const char * protocol)
    if (trans->flags & TRANS_ALIAS) {
        if (trans->nolisten)
 	   while (trans->nolisten[i]) {
-	       ret |= TRANS(NoListen)(trans->nolisten[i]);
+	       ret |= TransNoListen(trans->nolisten[i]);
 	       i++;
        }
    }
@@ -702,12 +690,12 @@ TRANS(NoListen) (const char * protocol)
 }
 
 int
-TRANS(Listen) (const char * protocol)
+TransListen(const char * protocol)
 {
    Xtransport *trans;
    int i = 0, ret = 0;
 
-   if ((trans = TRANS(SelectTransport)(protocol)) == NULL)
+   if ((trans = TransSelectTransport(protocol)) == NULL)
    {
 	prmsg (1,"TransListen: unable to find transport: %s\n",
 	       protocol);
@@ -717,7 +705,7 @@ TRANS(Listen) (const char * protocol)
    if (trans->flags & TRANS_ALIAS) {
        if (trans->nolisten)
 	   while (trans->nolisten[i]) {
-	       ret |= TRANS(Listen)(trans->nolisten[i]);
+	       ret |= TransListen(trans->nolisten[i]);
 	       i++;
        }
    }
@@ -727,11 +715,11 @@ TRANS(Listen) (const char * protocol)
 }
 
 int
-TRANS(IsListening) (const char * protocol)
+TransIsListening(const char * protocol)
 {
    Xtransport *trans;
 
-   if ((trans = TRANS(SelectTransport)(protocol)) == NULL)
+   if ((trans = TransSelectTransport(protocol)) == NULL)
    {
 	prmsg (1,"TransIsListening: unable to find transport: %s\n",
 	       protocol);
@@ -743,8 +731,7 @@ TRANS(IsListening) (const char * protocol)
 }
 
 int
-TRANS(ResetListener) (XtransConnInfo ciptr)
-
+TransResetListener(XtransConnInfo ciptr)
 {
     if (ciptr->transptr->ResetListener)
 	return ciptr->transptr->ResetListener (ciptr);
@@ -754,8 +741,7 @@ TRANS(ResetListener) (XtransConnInfo ciptr)
 
 
 XtransConnInfo
-TRANS(Accept) (XtransConnInfo ciptr, int *status)
-
+TransAccept(XtransConnInfo ciptr, int *status)
 {
     XtransConnInfo	newciptr;
 
@@ -770,64 +756,57 @@ TRANS(Accept) (XtransConnInfo ciptr, int *status)
 }
 
 int
-TRANS(BytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
-
+TransBytesReadable(XtransConnInfo ciptr, BytesReadable_t *pend)
 {
     return ciptr->transptr->BytesReadable (ciptr, pend);
 }
 
 int
-TRANS(Read) (XtransConnInfo ciptr, char *buf, int size)
-
+TransRead(XtransConnInfo ciptr, char *buf, int size)
 {
     return ciptr->transptr->Read (ciptr, buf, size);
 }
 
 int
-TRANS(Write) (XtransConnInfo ciptr, char *buf, int size)
-
+TransWrite(XtransConnInfo ciptr, char *buf, int size)
 {
     return ciptr->transptr->Write (ciptr, buf, size);
 }
 
 int
-TRANS(Readv) (XtransConnInfo ciptr, struct iovec *buf, int size)
-
+TransReadv(XtransConnInfo ciptr, struct iovec *buf, int size)
 {
     return ciptr->transptr->Readv (ciptr, buf, size);
 }
 
 int
-TRANS(Writev) (XtransConnInfo ciptr, struct iovec *buf, int size)
-
+TransWritev(XtransConnInfo ciptr, struct iovec *buf, int size)
 {
     return ciptr->transptr->Writev (ciptr, buf, size);
 }
 
 #if XTRANS_SEND_FDS
 int
-TRANS(SendFd) (XtransConnInfo ciptr, int fd, int do_close)
+TransSendFd(XtransConnInfo ciptr, int fd, int do_close)
 {
     return ciptr->transptr->SendFd(ciptr, fd, do_close);
 }
 
 int
-TRANS(RecvFd) (XtransConnInfo ciptr)
+TransRecvFd(XtransConnInfo ciptr)
 {
     return ciptr->transptr->RecvFd(ciptr);
 }
 #endif
 
 int
-TRANS(Disconnect) (XtransConnInfo ciptr)
-
+TransDisconnect(XtransConnInfo ciptr)
 {
     return ciptr->transptr->Disconnect (ciptr);
 }
 
 int
-TRANS(Close) (XtransConnInfo ciptr)
-
+TransClose(XtransConnInfo ciptr)
 {
     int ret;
 
@@ -835,14 +814,13 @@ TRANS(Close) (XtransConnInfo ciptr)
 
     ret = ciptr->transptr->Close (ciptr);
 
-    TRANS(FreeConnInfo) (ciptr);
+    TransFreeConnInfo(ciptr);
 
     return ret;
 }
 
 int
-TRANS(CloseForCloning) (XtransConnInfo ciptr)
-
+TransCloseForCloning(XtransConnInfo ciptr)
 {
     int ret;
 
@@ -850,22 +828,20 @@ TRANS(CloseForCloning) (XtransConnInfo ciptr)
 
     ret = ciptr->transptr->CloseForCloning (ciptr);
 
-    TRANS(FreeConnInfo) (ciptr);
+    TransFreeConnInfo(ciptr);
 
     return ret;
 }
 
 int
-TRANS(IsLocal) (XtransConnInfo ciptr)
-
+TransIsLocal(XtransConnInfo ciptr)
 {
     return (ciptr->family == AF_UNIX);
 }
 
 int
-TRANS(GetPeerAddr) (XtransConnInfo ciptr, int *familyp, int *addrlenp,
-		    Xtransaddr **addrp)
-
+TransGetPeerAddr(XtransConnInfo ciptr, int *familyp, int *addrlenp,
+                 Xtransaddr **addrp)
 {
     prmsg (2,"GetPeerAddr(%d)\n", ciptr->fd);
 
@@ -884,8 +860,7 @@ TRANS(GetPeerAddr) (XtransConnInfo ciptr, int *familyp, int *addrlenp,
 
 
 int
-TRANS(GetConnectionNumber) (XtransConnInfo ciptr)
-
+TransGetConnectionNumber(XtransConnInfo ciptr)
 {
     return ciptr->fd;
 }
@@ -982,7 +957,7 @@ receive_listening_fds(const char* port, XtransConnInfo* temp_ciptrs,
             return -1;
         }
 
-        ciptr = TRANS(ReopenCOTSServer)(ti, i + SD_LISTEN_FDS_START, port);
+        ciptr = TransReopenCOTSServer(ti, i + SD_LISTEN_FDS_START, port);
         if (!ciptr)
         {
             prmsg (1, "receive_listening_fds:"
@@ -993,7 +968,7 @@ receive_listening_fds(const char* port, XtransConnInfo* temp_ciptrs,
         prmsg (5, "receive_listening_fds: received listener for %s, %d\n",
                tn, ciptr->fd);
         temp_ciptrs[(*count_ret)++] = ciptr;
-        TRANS(Received)(tn);
+        TransReceived(tn);
     }
 #endif /* HAVE_SYSTEMD_DAEMON */
     return 0;
@@ -1004,9 +979,8 @@ extern int xquartz_launchd_fd;
 #endif
 
 int
-TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
-                                   int *count_ret, XtransConnInfo **ciptrs_ret)
-
+TransMakeAllCOTSServerListeners(const char *port, int *partial,
+                                int *count_ret, XtransConnInfo **ciptrs_ret)
 {
     char		buffer[256]; /* ??? What size ?? */
     XtransConnInfo	ciptr, temp_ciptrs[NUMTRANS];
@@ -1023,8 +997,8 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 #ifdef XQUARTZ_EXPORTS_LAUNCHD_FD
     fprintf(stderr, "Launchd socket fd: %d\n", xquartz_launchd_fd);
     if(xquartz_launchd_fd != -1) {
-        if((ciptr = TRANS(ReopenCOTSServer(TRANS_SOCKET_LOCAL_INDEX,
-                                           xquartz_launchd_fd, getenv("DISPLAY"))))==NULL)
+        if((ciptr = TransReopenCOTSServer(TRANS_SOCKET_LOCAL_INDEX,
+                                          xquartz_launchd_fd, getenv("DISPLAY"))))==NULL)
             fprintf(stderr,"Got NULL while trying to Reopen launchd port\n");
         else
             temp_ciptrs[(*count_ret)++] = ciptr;
@@ -1049,7 +1023,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 	prmsg (5,"MakeAllCOTSServerListeners: opening %s\n",
 	       buffer);
 
-	if ((ciptr = TRANS(OpenCOTSServer(buffer))) == NULL)
+	if ((ciptr = TransOpenCOTSServer(buffer)) == NULL)
 	{
 	    if (trans->flags & TRANS_DISABLED)
 		continue;
@@ -1065,7 +1039,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 		    flags |= ADDR_IN_USE_ALLOWED;
 #endif
 
-	if ((status = TRANS(CreateListener (ciptr, port, flags))) < 0)
+	if ((status = TransCreateListener(ciptr, port, flags)) < 0)
 	{
 	    if (status == TRANS_ADDR_IN_USE)
 	    {
@@ -1079,7 +1053,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
 		"MakeAllCOTSServerListeners: server already running\n");
 
 		for (j = 0; j < *count_ret; j++)
-		    TRANS(Close) (temp_ciptrs[j]);
+		    TransClose(temp_ciptrs[j]);
 
 		*count_ret = 0;
 		*ciptrs_ret = NULL;
@@ -1146,8 +1120,7 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
  * emulate readv
  */
 
-static int TRANS(ReadV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
+static int TransReadV(XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 {
     int i, len, total;
     char *base;
@@ -1158,7 +1131,7 @@ static int TRANS(ReadV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 	base = iov->iov_base;
 	while (len > 0) {
 	    register int nbytes;
-	    nbytes = TRANS(Read) (ciptr, base, len);
+	    nbytes = TransRead(ciptr, base, len);
 	    if (nbytes < 0 && total == 0)  return -1;
 	    if (nbytes <= 0)  return total;
 	    ESET(0);
@@ -1175,8 +1148,7 @@ static int TRANS(ReadV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
  * emulate writev
  */
 
-static int TRANS(WriteV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
+static int TransWriteV(XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 {
     int i, len, total;
     char *base;
@@ -1187,7 +1159,7 @@ static int TRANS(WriteV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 	base = iov->iov_base;
 	while (len > 0) {
 	    register int nbytes;
-	    nbytes = TRANS(Write) (ciptr, base, len);
+	    nbytes = TransWrite(ciptr, base, len);
 	    if (nbytes < 0 && total == 0)  return -1;
 	    if (nbytes <= 0)  return total;
 	    ESET(0);
@@ -1210,11 +1182,10 @@ static int TRANS(WriteV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 #endif
 
 /*
- * TRANS(GetHostname) - similar to gethostname but allows special processing.
+ * TransGetHostname - similar to gethostname but allows special processing.
  */
 
-int TRANS(GetHostname) (char *buf, int maxlen)
-
+int TransGetHostname(char *buf, int maxlen)
 {
     int len;
 

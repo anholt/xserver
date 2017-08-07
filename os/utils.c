@@ -665,7 +665,7 @@ ProcessCommandLine(int argc, char *argv[])
 #endif
 
     for (i = 0; defaultNoListenList[i] != NULL; i++) {
-        if (_XSERVTransNoListen(defaultNoListenList[i]))
+        if (TransNoListen(defaultNoListenList[i]))
                     ErrorF("Failed to disable listen for %s transport",
                            defaultNoListenList[i]);
     }
@@ -863,7 +863,7 @@ ProcessCommandLine(int argc, char *argv[])
 	}
         else if (strcmp(argv[i], "-nolisten") == 0) {
             if (++i < argc) {
-                if (_XSERVTransNoListen(argv[i]))
+                if (TransNoListen(argv[i]))
                     ErrorF("Failed to disable listen for %s transport",
                            argv[i]);
             }
@@ -872,7 +872,7 @@ ProcessCommandLine(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "-listen") == 0) {
             if (++i < argc) {
-                if (_XSERVTransListen(argv[i]))
+                if (TransListen(argv[i]))
                     ErrorF("Failed to enable listen for %s transport",
                            argv[i]);
             }

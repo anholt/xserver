@@ -233,7 +233,7 @@ XdmcpDefaultListen(void)
 {
     /* Even when configured --disable-listen-tcp, we should listen on tcp in
        XDMCP modes */
-    _XSERVTransListen("tcp");
+    TransListen("tcp");
 }
 
 int
@@ -1379,7 +1379,7 @@ get_addr_by_name(const char *argtype,
     _Xgethostbynameparams hparams;
 #endif
 #if defined(WIN32) && defined(TCPCONN)
-    _XSERVTransWSAStartup();
+    TransWSAStartup();
 #endif
     if (!(hep = _XGethostbyname(namestr, hparams))) {
         FatalError("Xserver: %s unknown host: %s\n", argtype, namestr);

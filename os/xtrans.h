@@ -58,25 +58,6 @@ from The Open Group.
 #include <sys/socket.h>
 #endif
 
-#ifdef __clang__
-/* Not all clients make use of all provided statics */
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#endif
-
-/*
- * Set the functions names according to where this code is being compiled.
- */
-
-#define TRANS(func) _XSERVTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_XSERVTrans";
-#endif
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
 /*
  * Create a single address structure that can be used wherever
  * an address structure is needed. struct sockaddr is not big enough
@@ -106,7 +87,7 @@ typedef long BytesReadable_t;
 #if defined(WIN32) || defined(USG)
 
 /*
- *      TRANS(Readv) and TRANS(Writev) use struct iovec, normally found
+ *      TransReadv and TransWritev use struct iovec, normally found
  *      in Berkeley systems in <sys/uio.h>.  See the readv(2) and writev(2)
  *      manual pages for details.
  */
@@ -170,25 +151,25 @@ typedef struct _XtransConnInfo *XtransConnInfo;
  * Function prototypes for the exposed interface
  */
 
-void TRANS(FreeConnInfo) (
+void TransFreeConnInfo (
     XtransConnInfo 	/* ciptr */
 );
 
 
 
-XtransConnInfo TRANS(OpenCOTSServer)(
+XtransConnInfo TransOpenCOTSServer(
     const char *	/* address */
 );
 
 
 
-XtransConnInfo TRANS(ReopenCOTSServer)(
+XtransConnInfo TransReopenCOTSServer(
     int,		/* trans_id */
     int,		/* fd */
     const char *	/* port */
 );
 
-int TRANS(GetReopenInfo)(
+int TransGetReopenInfo(
     XtransConnInfo,	/* ciptr */
     int *,		/* trans_id */
     int *,		/* fd */
@@ -197,108 +178,108 @@ int TRANS(GetReopenInfo)(
 
 
 
-int TRANS(SetOption)(
+int TransSetOption(
     XtransConnInfo,	/* ciptr */
     int,		/* option */
     int			/* arg */
 );
 
 
-int TRANS(CreateListener)(
+int TransCreateListener(
     XtransConnInfo,	/* ciptr */
     const char *,	/* port */
     unsigned int	/* flags */
 );
 
-int TRANS(Received) (
+int TransReceived (
     const char*         /* protocol*/
 );
 
-int TRANS(NoListen) (
+int TransNoListen (
     const char*         /* protocol*/
 );
 
-int TRANS(Listen) (
+int TransListen (
     const char*         /* protocol*/
 );
 
-int TRANS(IsListening) (
+int TransIsListening (
     const char*         /* protocol*/
 );
 
-int TRANS(ResetListener)(
+int TransResetListener(
     XtransConnInfo	/* ciptr */
 );
 
-XtransConnInfo TRANS(Accept)(
+XtransConnInfo TransAccept(
     XtransConnInfo,	/* ciptr */
     int *		/* status */
 );
 
 
 
-int TRANS(BytesReadable)(
+int TransBytesReadable(
     XtransConnInfo,	/* ciptr */
     BytesReadable_t *	/* pend */
 );
 
-int TRANS(Read)(
+int TransRead(
     XtransConnInfo,	/* ciptr */
     char *,		/* buf */
     int			/* size */
 );
 
-int TRANS(Write)(
+int TransWrite(
     XtransConnInfo,	/* ciptr */
     char *,		/* buf */
     int			/* size */
 );
 
-int TRANS(Readv)(
+int TransReadv(
     XtransConnInfo,	/* ciptr */
     struct iovec *,	/* buf */
     int			/* size */
 );
 
-int TRANS(Writev)(
+int TransWritev(
     XtransConnInfo,	/* ciptr */
     struct iovec *,	/* buf */
     int			/* size */
 );
 
-int TRANS(SendFd) (XtransConnInfo ciptr, int fd, int do_close);
+int TransSendFd (XtransConnInfo ciptr, int fd, int do_close);
 
-int TRANS(RecvFd) (XtransConnInfo ciptr);
+int TransRecvFd (XtransConnInfo ciptr);
 
-int TRANS(Disconnect)(
+int TransDisconnect(
     XtransConnInfo	/* ciptr */
 );
 
-int TRANS(Close)(
+int TransClose(
     XtransConnInfo	/* ciptr */
 );
 
-int TRANS(CloseForCloning)(
+int TransCloseForCloning(
     XtransConnInfo	/* ciptr */
 );
 
-int TRANS(IsLocal)(
+int TransIsLocal(
     XtransConnInfo	/* ciptr */
 );
 
-int TRANS(GetPeerAddr)(
+int TransGetPeerAddr(
     XtransConnInfo,	/* ciptr */
     int *,		/* familyp */
     int *,		/* addrlenp */
     Xtransaddr **	/* addrp */
 );
 
-int TRANS(GetConnectionNumber)(
+int TransGetConnectionNumber(
     XtransConnInfo	/* ciptr */
 );
 
 
-int TRANS(MakeAllCOTSServerListeners)(
+int TransMakeAllCOTSServerListeners(
     const char *,	/* port */
     int *,		/* partial */
     int *,		/* count_ret */
@@ -309,20 +290,20 @@ int TRANS(MakeAllCOTSServerListeners)(
  * Function Prototypes for Utility Functions.
  */
 
-int TRANS(ConvertAddress)(
+int TransConvertAddress(
     int *,		/* familyp */
     int *,		/* addrlenp */
     Xtransaddr **	/* addrp */
 );
 
 int
-TRANS(GetHostname) (
+TransGetHostname (
     char *	/* buf */,
     int 	/* maxlen */
 );
 
 #if defined(WIN32) && defined(TCPCONN)
-int TRANS(WSAStartup)();
+int TransWSAStartup();
 #endif
 
 #endif /* _XTRANS_H_ */
