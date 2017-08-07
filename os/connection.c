@@ -69,9 +69,6 @@ SOFTWARE.
 #endif
 #include <X11/X.h>
 #include <X11/Xproto.h>
-#define XSERV_t
-#define TRANS_SERVER
-#define TRANS_REOPEN
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>

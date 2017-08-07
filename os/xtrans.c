@@ -435,14 +435,9 @@ TRANS(Open) (int type, const char *address)
     switch (type)
     {
     case XTRANS_OPEN_COTS_CLIENT:
-#ifdef TRANS_CLIENT
-	ciptr = thistrans->OpenCOTSClient(thistrans, protocol, host, port);
-#endif /* TRANS_CLIENT */
 	break;
     case XTRANS_OPEN_COTS_SERVER:
-#ifdef TRANS_SERVER
 	ciptr = thistrans->OpenCOTSServer(thistrans, protocol, host, port);
-#endif /* TRANS_SERVER */
 	break;
     default:
 	prmsg (1,"Open: Unknown Open type %d\n", type);
@@ -469,9 +464,6 @@ TRANS(Open) (int type, const char *address)
 
     return ciptr;
 }
-
-
-#ifdef TRANS_REOPEN
 
 /*
  * We might want to create an XtransConnInfo object based on a previously
@@ -538,30 +530,11 @@ TRANS(Reopen) (int type, int trans_id, int fd, const char *port)
     return ciptr;
 }
 
-#endif /* TRANS_REOPEN */
-
-
-
 /*
  * These are the public interfaces to this Transport interface.
  * These are the only functions that should have knowledge of the transport
  * table.
  */
-
-#ifdef TRANS_CLIENT
-
-XtransConnInfo
-TRANS(OpenCOTSClient) (const char *address)
-
-{
-    prmsg (2,"OpenCOTSClient(%s)\n", address);
-    return TRANS(Open) (XTRANS_OPEN_COTS_CLIENT, address);
-}
-
-#endif /* TRANS_CLIENT */
-
-
-#ifdef TRANS_SERVER
 
 XtransConnInfo
 TRANS(OpenCOTSServer) (const char *address)
@@ -570,11 +543,6 @@ TRANS(OpenCOTSServer) (const char *address)
     prmsg (2,"OpenCOTSServer(%s)\n", address);
     return TRANS(Open) (XTRANS_OPEN_COTS_SERVER, address);
 }
-
-#endif /* TRANS_SERVER */
-
-
-#ifdef TRANS_REOPEN
 
 XtransConnInfo
 TRANS(ReopenCOTSServer) (int trans_id, int fd, const char *port)
@@ -605,9 +573,6 @@ TRANS(GetReopenInfo) (XtransConnInfo ciptr,
 
     return 0;
 }
-
-#endif /* TRANS_REOPEN */
-
 
 int
 TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
@@ -691,8 +656,6 @@ TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
 
     return ret;
 }
-
-#ifdef TRANS_SERVER
 
 int
 TRANS(CreateListener) (XtransConnInfo ciptr, const char *port, unsigned int flags)
@@ -823,54 +786,6 @@ TRANS(Accept) (XtransConnInfo ciptr, int *status)
     return newciptr;
 }
 
-#endif /* TRANS_SERVER */
-
-
-#ifdef TRANS_CLIENT
-
-int
-TRANS(Connect) (XtransConnInfo ciptr, const char *address)
-
-{
-    char	*protocol;
-    char	*host;
-    char	*port;
-    int		ret;
-
-    prmsg (2,"Connect(%d,%s)\n", ciptr->fd, address);
-
-    if (TRANS(ParseAddress) (address, &protocol, &host, &port) == 0)
-    {
-	prmsg (1,"Connect: Unable to Parse address %s\n",
-	       address);
-	return -1;
-    }
-
-#ifdef HAVE_LAUNCHD
-    if (!host) host=strdup("");
-#endif
-
-    if (!port || !*port)
-    {
-	prmsg (1,"Connect: Missing port specification in %s\n",
-	      address);
-	if (protocol) free (protocol);
-	if (host) free (host);
-	return -1;
-    }
-
-    ret = ciptr->transptr->Connect (ciptr, host, port);
-
-    if (protocol) free (protocol);
-    if (host) free (host);
-    if (port) free (port);
-
-    return ret;
-}
-
-#endif /* TRANS_CLIENT */
-
-
 int
 TRANS(BytesReadable) (XtransConnInfo ciptr, BytesReadable_t *pend)
 
@@ -992,14 +907,12 @@ TRANS(GetConnectionNumber) (XtransConnInfo ciptr)
     return ciptr->fd;
 }
 
-
 /*
  * These functions are really utility functions, but they require knowledge
  * of the internal data structures, so they have to be part of the Transport
  * Independant API.
  */
 
-#ifdef TRANS_SERVER
 
 static int
 complete_network_count (void)
@@ -1238,10 +1151,6 @@ TRANS(MakeAllCOTSServerListeners) (const char *port, int *partial,
     return 0;
 }
 
-#endif /* TRANS_SERVER */
-
-
-
 /*
  * These routines are not part of the X Transport Interface, but they
  * may be used by it.

@@ -75,13 +75,11 @@ static const char *__xtransname = "_X11Trans";
 #endif
 #endif /* X11_t */
 
-#ifdef XSERV_t
 #define TRANS(func) _XSERVTrans##func
 #ifdef XTRANSDEBUG
 static const char *__xtransname = "_XSERVTrans";
 #endif
 #define X11_t
-#endif /* XSERV_t */
 
 #ifdef XIM_t
 #define TRANS(func) _XimXTrans##func
@@ -219,23 +217,13 @@ void TRANS(FreeConnInfo) (
     XtransConnInfo 	/* ciptr */
 );
 
-#ifdef TRANS_CLIENT
 
-XtransConnInfo TRANS(OpenCOTSClient)(
-    const char *	/* address */
-);
-
-#endif /* TRANS_CLIENT */
-
-#ifdef TRANS_SERVER
 
 XtransConnInfo TRANS(OpenCOTSServer)(
     const char *	/* address */
 );
 
-#endif /* TRANS_SERVER */
 
-#ifdef TRANS_REOPEN
 
 XtransConnInfo TRANS(ReopenCOTSServer)(
     int,		/* trans_id */
@@ -250,7 +238,6 @@ int TRANS(GetReopenInfo)(
     char **		/* port */
 );
 
-#endif /* TRANS_REOPEN */
 
 
 int TRANS(SetOption)(
@@ -259,7 +246,6 @@ int TRANS(SetOption)(
     int			/* arg */
 );
 
-#ifdef TRANS_SERVER
 
 int TRANS(CreateListener)(
     XtransConnInfo,	/* ciptr */
@@ -292,16 +278,7 @@ XtransConnInfo TRANS(Accept)(
     int *		/* status */
 );
 
-#endif /* TRANS_SERVER */
 
-#ifdef TRANS_CLIENT
-
-int TRANS(Connect)(
-    XtransConnInfo,	/* ciptr */
-    const char *	/* address */
-);
-
-#endif /* TRANS_CLIENT */
 
 int TRANS(BytesReadable)(
     XtransConnInfo,	/* ciptr */
@@ -363,7 +340,6 @@ int TRANS(GetConnectionNumber)(
     XtransConnInfo	/* ciptr */
 );
 
-#ifdef TRANS_SERVER
 
 int TRANS(MakeAllCOTSServerListeners)(
     const char *,	/* port */
@@ -372,7 +348,6 @@ int TRANS(MakeAllCOTSServerListeners)(
     XtransConnInfo **	/* ciptrs_ret */
 );
 
-#endif /* TRANS_SERVER */
 
 
 /*

@@ -54,9 +54,6 @@ from The Open Group.
 #include <X11/Xfuncproto.h>
 #include <stdlib.h>
 
-#define TRANS_REOPEN
-#define TRANS_SERVER
-#define XSERV_t
 #define XTRANS_TRANSPORT_C  /* used to flag Xtransint.h that it's being used
 			       here, not just #included in another file */
 

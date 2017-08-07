@@ -446,7 +446,6 @@ is_numeric (const char *str)
     return (1);
 }
 
-#ifdef TRANS_SERVER
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -634,4 +633,3 @@ trans_mkdir(const char *path, int mode)
     return -1;
 }
 
-#endif /* TRANS_SERVER */

@@ -156,18 +156,6 @@ typedef struct _Xtransport {
     const char	*TransName;
     int		flags;
 
-#ifdef TRANS_CLIENT
-
-    XtransConnInfo (*OpenCOTSClient)(
-	struct _Xtransport *,	/* transport */
-	const char *,		/* protocol */
-	const char *,		/* host */
-	const char *		/* port */
-    );
-
-#endif /* TRANS_CLIENT */
-
-#ifdef TRANS_SERVER
     const char **	nolisten;
     XtransConnInfo (*OpenCOTSServer)(
 	struct _Xtransport *,	/* transport */
@@ -176,18 +164,11 @@ typedef struct _Xtransport {
 	const char *		/* port */
     );
 
-#endif /* TRANS_SERVER */
-
-#ifdef TRANS_REOPEN
-
     XtransConnInfo (*ReopenCOTSServer)(
 	struct _Xtransport *,	/* transport */
         int,			/* fd */
         const char *		/* port */
     );
-
-#endif /* TRANS_REOPEN */
-
 
     int	(*SetOption)(
 	XtransConnInfo,		/* connection */
@@ -195,7 +176,6 @@ typedef struct _Xtransport {
 	int			/* arg */
     );
 
-#ifdef TRANS_SERVER
 /* Flags */
 # define ADDR_IN_USE_ALLOWED	1
 
@@ -213,18 +193,6 @@ typedef struct _Xtransport {
 	XtransConnInfo,		/* connection */
         int *			/* status */
     );
-
-#endif /* TRANS_SERVER */
-
-#ifdef TRANS_CLIENT
-
-    int	(*Connect)(
-	XtransConnInfo,		/* connection */
-	const char *,		/* host */
-	const char *		/* port */
-    );
-
-#endif /* TRANS_CLIENT */
 
     int	(*BytesReadable)(
 	XtransConnInfo,		/* connection */
@@ -356,12 +324,10 @@ static int is_numeric (
     const char *	/* str */
 );
 
-#ifdef TRANS_SERVER
 static int trans_mkdir (
     const char *,	/* path */
     int			/* mode */
 );
-#endif
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -373,31 +339,7 @@ static int trans_mkdir (
 
 #ifdef XTRANSDEBUG
 #include <stdarg.h>
-
-/*
- * The X server provides ErrorF() & VErrorF(), for other software that uses
- * xtrans, we provide our own simple versions.
- */
-# if defined(XSERV_t) && defined(TRANS_SERVER)
-#  include "os.h"
-# else
-static inline void _X_ATTRIBUTE_PRINTF(1, 0)
-VErrorF(const char *f, va_list args)
-{
-    vfprintf(stderr, f, args);
-    fflush(stderr);
-}
-
-static inline void  _X_ATTRIBUTE_PRINTF(1, 2)
-ErrorF(const char *f, ...)
-{
-    va_list args;
-
-    va_start(args, f);
-    VErrorF(f, args);
-    va_end(args);
-}
-# endif /* xserver */
+#include "os.h"
 #endif /* XTRANSDEBUG */
 
 static inline void  _X_ATTRIBUTE_PRINTF(2, 3)

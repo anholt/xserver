@@ -40,10 +40,6 @@
 #include "dixstruct.h"
 #include "opaque.h"
 #include "site.h"
-
-#define XSERV_t
-#define TRANS_SERVER
-#define TRANS_REOPEN
 #include "xtrans.h"
 
 #ifdef XDMCP
