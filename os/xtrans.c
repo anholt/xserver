@@ -181,10 +181,7 @@ TRANS(SelectTransport) (const char *protocol)
     return NULL;
 }
 
-#ifndef TEST_t
-static
-#endif /* TEST_t */
-int
+static int
 TRANS(ParseAddress) (const char *address,
                      char **protocol, char **host, char **port)
 
@@ -317,20 +314,6 @@ TRANS(ParseAddress) (const char *address,
 
     _port = mybuf;
 
-#if defined(FONT_t) || defined(FS_t)
-    /*
-     * Is there an optional catalogue list?
-     */
-
-    if ((mybuf = strchr (mybuf,'/')) != NULL)
-	*mybuf ++= '\0';
-
-    /*
-     * The rest, if any, is the (currently unused) catalogue list.
-     *
-     * _catalogue = mybuf;
-     */
-#endif
 
 #ifdef HAVE_LAUNCHD
     /* launchd sockets will look like 'local//tmp/launch-XgkNns/:0' */

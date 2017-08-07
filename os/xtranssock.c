@@ -197,26 +197,8 @@ static int TRANS(SocketINETClose) (XtransConnInfo ciptr);
 #endif
 
 #ifdef UNIXCONN
-
-
-#if defined(X11_t)
 #define UNIX_PATH "/tmp/.X11-unix/X"
 #define UNIX_DIR "/tmp/.X11-unix"
-#endif /* X11_t */
-#if defined(XIM_t)
-#define UNIX_PATH "/tmp/.XIM-unix/XIM"
-#define UNIX_DIR "/tmp/.XIM-unix"
-#endif /* XIM_t */
-#if defined(FS_t) || defined(FONT_t)
-#define UNIX_PATH "/tmp/.font-unix/fs"
-#define UNIX_DIR "/tmp/.font-unix"
-#endif /* FS_t || FONT_t */
-#if defined(ICE_t)
-#define UNIX_PATH "/tmp/.ICE-unix/"
-#define UNIX_DIR "/tmp/.ICE-unix"
-#endif /* ICE_t */
-
-
 #endif /* UNIXCONN */
 
 #define PORTBUFSIZE	32
@@ -396,7 +378,7 @@ TRANS(SocketOpen) (int i, int type)
     if ((ciptr->fd = socket(Sockettrans2devtab[i].family, type,
 	Sockettrans2devtab[i].protocol)) < 0
 #ifndef WIN32
-#if (defined(X11_t) && !defined(USE_POLL)) || defined(FS_t) || defined(FONT_t)
+#if !defined(USE_POLL) || defined(FS_t) || defined(FONT_t)
        || ciptr->fd >= sysconf(_SC_OPEN_MAX)
 #endif
 #endif
@@ -762,14 +744,10 @@ TRANS(SocketINETCreateListener) (XtransConnInfo ciptr, const char *port,
     _Xgetservbynameparams sparams;
 #endif
     struct servent *servp;
-
-#ifdef X11_t
     char	portbuf[PORTBUFSIZE];
-#endif
 
     prmsg (2, "SocketINETCreateListener(%s)\n", port);
 
-#ifdef X11_t
     /*
      * X has a well known port, that is transport dependent. It is easier
      * to handle it here, than try and come up with a transport independent
@@ -786,7 +764,6 @@ TRANS(SocketINETCreateListener) (XtransConnInfo ciptr, const char *port,
 	snprintf (portbuf, sizeof(portbuf), "%lu", tmpport);
 	port = portbuf;
     }
-#endif
 
     if (port && *port)
     {

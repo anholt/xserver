@@ -243,16 +243,10 @@ static void _dummy(int sig _X_UNUSED)
 #define X_STREAMS_DIR	"/dev/X"
 #define DEV_SPX		"/dev/spx"
 #else
-#ifndef X11_t
-#define X_STREAMS_DIR	"/dev/X"
-#else
 #define X_STREAMS_DIR	"/tmp/.X11-pipe"
-#endif
 #endif
 
 #define DEV_PTMX	"/dev/ptmx"
-
-#if defined(X11_t)
 
 #define PTSNODENAME "/dev/X/server."
 #ifdef __sun
@@ -263,53 +257,7 @@ static void _dummy(int sig _X_UNUSED)
 #define SCORNODENAME	"/dev/X%1sR"
 #define SCOSNODENAME	"/dev/X%1sS"
 #endif /* !__sun */
-#endif
-#if defined(XIM_t)
-#ifdef __sun
-#define NAMEDNODENAME "/tmp/.XIM-pipe/XIM"
-#else
-#define PTSNODENAME	"/dev/X/XIM."
-#define NAMEDNODENAME	"/dev/X/NXIM."
-#define SCORNODENAME	"/dev/XIM.%sR"
-#define SCOSNODENAME	"/dev/XIM.%sS"
-#endif
-#endif
-#if defined(FS_t) || defined (FONT_t)
-#ifdef __sun
-#define NAMEDNODENAME	"/tmp/.font-pipe/fs"
-#else
-/*
- * USL has already defined something here. We need to check with them
- * and see if their choice is usable here.
- */
-#define PTSNODENAME	"/dev/X/fontserver."
-#define NAMEDNODENAME	"/dev/X/Nfontserver."
-#define SCORNODENAME	"/dev/fontserver.%sR"
-#define SCOSNODENAME	"/dev/fontserver.%sS"
-#endif
-#endif
-#if defined(ICE_t)
-#ifdef __sun
-#define NAMEDNODENAME	"/tmp/.ICE-pipe/"
-#else
-#define PTSNODENAME	"/dev/X/ICE."
-#define NAMEDNODENAME	"/dev/X/NICE."
-#define SCORNODENAME	"/dev/ICE.%sR"
-#define SCOSNODENAME	"/dev/ICE.%sS"
-#endif
-#endif
-#if defined(TEST_t)
-#ifdef __sun
-#define NAMEDNODENAME	"/tmp/.Test-unix/test"
-#endif
-#define PTSNODENAME	"/dev/X/transtest."
-#define NAMEDNODENAME	"/dev/X/Ntranstest."
-#define SCORNODENAME	"/dev/transtest.%sR"
-#define SCOSNODENAME	"/dev/transtest.%sS"
-#endif
 
-
-
 #ifdef LOCAL_TRANS_PTS
 
 static int
@@ -786,7 +734,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
     (void) sprintf(serverR_path, SCORNODENAME, port);
     (void) sprintf(serverS_path, SCOSNODENAME, port);
 
-#if !defined(X11_t) || !defined(__SCO__)
+#if !defined(__SCO__)
     unlink(serverR_path);
     unlink(serverS_path);
 
@@ -813,7 +761,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
 	close (fds);
 	return -1;
     }
-#else /* X11_t */
+#else /* __SCO__ */
 
     fds = open (serverS_path, O_RDWR | O_NDELAY);
     if (fds < 0) {
@@ -841,7 +789,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
 	close (fds);
 	return -1;
     }
-#endif /* X11_t */
+#endif /* __SCO__ */
 
     if (connect_spipe(fds, fdr)) {
 	prmsg(1,"SCOOpenServer: ioctl(I_FDINSERT) failed on %s\n",
@@ -855,7 +803,7 @@ TRANS(SCOOpenServer)(XtransConnInfo ciptr, const char *port)
      * Everything looks good: fill in the XtransConnInfo structure.
      */
 
-#if defined(X11_t) && defined(__SCO__)
+#if defined(__SCO__)
     ciptr->flags |= TRANS_NOUNLINK;
 #endif
     if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0) {
@@ -1037,7 +985,7 @@ TRANS(SCOReopenServer)(XtransConnInfo ciptr, int fd, const char *port)
     (void) sprintf(serverR_path, SCORNODENAME, port);
     (void) sprintf(serverS_path, SCOSNODENAME, port);
 
-#if defined(X11_t) && defined(__SCO__)
+#if defined(__SCO__)
     ciptr->flags |= TRANS_NOUNLINK;
 #endif
     if (TRANS(FillAddrInfo) (ciptr, serverS_path, serverR_path) == 0)
@@ -1229,14 +1177,12 @@ TRANS(LocalOpenServer)(int type, const char *protocol,
 
     prmsg(2,"LocalOpenServer(%d,%s,%s)\n", type, protocol, port);
 
-#if defined(X11_t)
     /*
      * For X11, the port will be in the format xserverN where N is the
      * display number. All of the local connections just need to know
      * the display number because they don't do any name resolution on
      * the port. This just truncates port to the display portion.
      */
-#endif /* X11_t */
 
     if( (ciptr = calloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {

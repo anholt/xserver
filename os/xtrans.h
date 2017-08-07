@@ -68,53 +68,10 @@ from The Open Group.
  * Set the functions names according to where this code is being compiled.
  */
 
-#ifdef X11_t
-#define TRANS(func) _X11Trans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_X11Trans";
-#endif
-#endif /* X11_t */
-
 #define TRANS(func) _XSERVTrans##func
 #ifdef XTRANSDEBUG
 static const char *__xtransname = "_XSERVTrans";
 #endif
-#define X11_t
-
-#ifdef XIM_t
-#define TRANS(func) _XimXTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_XimTrans";
-#endif
-#endif /* XIM_t */
-
-#ifdef FS_t
-#define TRANS(func) _FSTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_FSTrans";
-#endif
-#endif /* FS_t */
-
-#ifdef FONT_t
-#define TRANS(func) _FontTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_FontTrans";
-#endif
-#endif /* FONT_t */
-
-#ifdef ICE_t
-#define TRANS(func) _IceTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_IceTrans";
-#endif
-#endif /* ICE_t */
-
-#if !defined(TRANS)
-#define TRANS(func) _XTrans##func
-#ifdef XTRANSDEBUG
-static const char *__xtransname = "_XTrans";
-#endif
-#endif /* !TRANS */
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -348,35 +305,15 @@ int TRANS(MakeAllCOTSServerListeners)(
     XtransConnInfo **	/* ciptrs_ret */
 );
 
-
-
 /*
  * Function Prototypes for Utility Functions.
  */
-
-#ifdef X11_t
 
 int TRANS(ConvertAddress)(
     int *,		/* familyp */
     int *,		/* addrlenp */
     Xtransaddr **	/* addrp */
 );
-
-#endif /* X11_t */
-
-#ifdef ICE_t
-
-char *
-TRANS(GetMyNetworkId)(
-    XtransConnInfo	/* ciptr */
-);
-
-char *
-TRANS(GetPeerNetworkId)(
-    XtransConnInfo	/* ciptr */
-);
-
-#endif /* ICE_t */
 
 int
 TRANS(GetHostname) (
