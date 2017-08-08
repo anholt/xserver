@@ -1310,14 +1310,6 @@ TransLocalReopenCOTSServer(Xtransport *thistrans, int fd, const char *port)
 }
 
 static int
-TransLocalSetOption(XtransConnInfo ciptr, int option, int arg)
-{
-    prmsg(2,"LocalSetOption(%d,%d,%d)\n",ciptr->fd,option,arg);
-
-    return -1;
-}
-
-static int
 TransLocalCreateListener(XtransConnInfo ciptr, const char *port,
                          unsigned int flags _X_UNUSED)
 {
@@ -1495,7 +1487,6 @@ Xtransport	TransLocalFuncs = {
 	local_aliases,
 	TransLocalOpenCOTSServer,
 	TransLocalReopenCOTSServer,
-	TransLocalSetOption,
 	TransLocalCreateListener,
 	TransLocalResetListener,
 	TransLocalAccept,
@@ -1522,7 +1513,6 @@ Xtransport	TransPTSFuncs = {
 	NULL,
 	TransLocalOpenCOTSServer,
 	TransLocalReopenCOTSServer,
-	TransLocalSetOption,
 	TransLocalCreateListener,
 	TransLocalResetListener,
 	TransLocalAccept,
@@ -1551,7 +1541,6 @@ Xtransport	TransNAMEDFuncs = {
 	NULL,
 	TransLocalOpenCOTSServer,
 	TransLocalReopenCOTSServer,
-	TransLocalSetOption,
 	TransLocalCreateListener,
 	TransLocalResetListener,
 	TransLocalAccept,
@@ -1577,7 +1566,6 @@ Xtransport	TransPIPEFuncs = {
 	NULL,
 	TransLocalOpenCOTSServer,
 	TransLocalReopenCOTSServer,
-	TransLocalSetOption,
 	TransLocalCreateListener,
 	TransLocalResetListener,
 	TransLocalAccept,
@@ -1606,7 +1594,6 @@ Xtransport	TransSCOFuncs = {
 	NULL,
 	TransLocalOpenCOTSServer,
 	TransLocalReopenCOTSServer,
-	TransLocalSetOption,
 	TransLocalCreateListener,
 	TransLocalResetListener,
 	TransLocalAccept,

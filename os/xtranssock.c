@@ -607,14 +607,6 @@ TransSocketReopenCOTSServer(Xtransport *thistrans, int fd, const char *port)
     return ciptr;
 }
 
-static int
-TransSocketSetOption(XtransConnInfo ciptr, int option, int arg)
-{
-    prmsg (2,"SocketSetOption(%d,%d,%d)\n", ciptr->fd, option, arg);
-
-    return -1;
-}
-
 #ifdef UNIXCONN
 static int
 set_sun_path(const char *port, const char *upath, char *path, int abstract)
@@ -1570,7 +1562,6 @@ Xtransport	TransSocketTCPFuncs = {
 	tcp_nolisten,
 	TransSocketOpenCOTSServer,
 	TransSocketReopenCOTSServer,
-	TransSocketSetOption,
 	TransSocketINETCreateListener,
 	NULL,		       			/* ResetListener */
 	TransSocketINETAccept,
@@ -1595,7 +1586,6 @@ Xtransport	TransSocketINETFuncs = {
 	NULL,
 	TransSocketOpenCOTSServer,
 	TransSocketReopenCOTSServer,
-	TransSocketSetOption,
 	TransSocketINETCreateListener,
 	NULL,		       			/* ResetListener */
 	TransSocketINETAccept,
@@ -1621,7 +1611,6 @@ Xtransport     TransSocketINET6Funcs = {
 	NULL,
 	TransSocketOpenCOTSServer,
 	TransSocketReopenCOTSServer,
-	TransSocketSetOption,
 	TransSocketINETCreateListener,
 	NULL,					/* ResetListener */
 	TransSocketINETAccept,
@@ -1654,7 +1643,6 @@ Xtransport	TransSocketLocalFuncs = {
 	NULL,
 	TransSocketOpenCOTSServer,
 	TransSocketReopenCOTSServer,
-	TransSocketSetOption,
 	TransSocketUNIXCreateListener,
 	TransSocketUNIXResetListener,
 	TransSocketUNIXAccept,
@@ -1691,7 +1679,6 @@ Xtransport	TransSocketUNIXFuncs = {
 #endif
 	TransSocketOpenCOTSServer,
 	TransSocketReopenCOTSServer,
-	TransSocketSetOption,
 	TransSocketUNIXCreateListener,
 	TransSocketUNIXResetListener,
 	TransSocketUNIXAccept,

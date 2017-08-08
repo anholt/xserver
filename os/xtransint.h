@@ -164,12 +164,6 @@ typedef struct _Xtransport {
         const char *		/* port */
     );
 
-    int	(*SetOption)(
-	XtransConnInfo,		/* connection */
-	int,			/* option */
-	int			/* arg */
-    );
-
 /* Flags */
 # define ADDR_IN_USE_ALLOWED	1
 

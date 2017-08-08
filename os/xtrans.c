@@ -563,8 +563,6 @@ TransSetOption(XtransConnInfo ciptr, int option, int arg)
      * complicated transport such as shared memory or an OSI implementation
      * that uses the session and application libraries is implemented, this
      * code may have to move to a transport dependent function.
-     *
-     * ret = ciptr->transptr->SetOption (ciptr, option, arg);
      */
 
     switch (option)
