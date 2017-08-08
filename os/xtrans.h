@@ -259,10 +259,6 @@ int TransClose(
     XtransConnInfo	/* ciptr */
 );
 
-int TransCloseForCloning(
-    XtransConnInfo	/* ciptr */
-);
-
 int TransIsLocal(
     XtransConnInfo	/* ciptr */
 );

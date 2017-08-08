@@ -1523,26 +1523,6 @@ TransSocketUNIXClose(XtransConnInfo ciptr)
     return ret;
 }
 
-static int
-TransSocketUNIXCloseForCloning(XtransConnInfo ciptr)
-{
-    /*
-     * Don't unlink path.
-     */
-
-    int ret;
-
-    prmsg (2,"SocketUNIXCloseForCloning(%p,%d)\n",
-	ciptr, ciptr->fd);
-
-#if XTRANS_SEND_FDS
-    cleanupFds(ciptr);
-#endif
-    ret = close(ciptr->fd);
-
-    return ret;
-}
-
 #endif /* UNIXCONN */
 
 
@@ -1576,7 +1556,6 @@ Xtransport	TransSocketTCPFuncs = {
 #endif
 	TransSocketDisconnect,
 	TransSocketINETClose,
-	TransSocketINETClose,
 	};
 
 Xtransport	TransSocketINETFuncs = {
@@ -1599,7 +1578,6 @@ Xtransport	TransSocketINETFuncs = {
         TransSocketRecvFdInvalid,
 #endif
 	TransSocketDisconnect,
-	TransSocketINETClose,
 	TransSocketINETClose,
 	};
 
@@ -1624,7 +1602,6 @@ Xtransport     TransSocketINET6Funcs = {
         TransSocketRecvFdInvalid,
 #endif
 	TransSocketDisconnect,
-	TransSocketINETClose,
 	TransSocketINETClose,
 	};
 #endif /* IPv6 */
@@ -1657,7 +1634,6 @@ Xtransport	TransSocketLocalFuncs = {
 #endif
 	TransSocketDisconnect,
 	TransSocketUNIXClose,
-	TransSocketUNIXCloseForCloning,
 	};
 #endif /* !LOCALCONN */
 #  if !defined(LOCALCONN)
@@ -1693,7 +1669,6 @@ Xtransport	TransSocketUNIXFuncs = {
 #endif
 	TransSocketDisconnect,
 	TransSocketUNIXClose,
-	TransSocketUNIXCloseForCloning,
 	};
 
 #endif /* UNIXCONN */

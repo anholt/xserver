@@ -1442,21 +1442,6 @@ TransLocalClose(XtransConnInfo ciptr)
     return ret;
 }
 
-static int
-TransLocalCloseForCloning(XtransConnInfo ciptr)
-{
-    int ret;
-
-    prmsg(2,"LocalCloseForCloning(%p->%d)\n", ciptr, ciptr->fd );
-
-    /* Don't unlink path */
-
-    ret=close(ciptr->fd);
-
-    return ret;
-}
-
-
 /*
  * MakeAllCOTSServerListeners() will go through the entire Xtransports[]
  * array defined in Xtrans.c and try to OpenCOTSServer() for each entry.
@@ -1501,7 +1486,6 @@ Xtransport	TransLocalFuncs = {
 #endif
 	TransLocalDisconnect,
 	TransLocalClose,
-	TransLocalCloseForCloning,
 };
 
 #ifdef LOCAL_TRANS_PTS
@@ -1527,7 +1511,6 @@ Xtransport	TransPTSFuncs = {
 #endif
 	TransLocalDisconnect,
 	TransLocalClose,
-	TransLocalCloseForCloning,
 };
 
 #endif /* LOCAL_TRANS_PTS */
@@ -1555,7 +1538,6 @@ Xtransport	TransNAMEDFuncs = {
 #endif
 	TransLocalDisconnect,
 	TransLocalClose,
-	TransLocalCloseForCloning,
 };
 
 #ifdef __sun
@@ -1580,7 +1562,6 @@ Xtransport	TransPIPEFuncs = {
 #endif
 	TransLocalDisconnect,
 	TransLocalClose,
-	TransLocalCloseForCloning,
 };
 #endif /* __sun */
 #endif /* LOCAL_TRANS_NAMED */
@@ -1608,6 +1589,5 @@ Xtransport	TransSCOFuncs = {
 #endif
 	TransLocalDisconnect,
 	TransLocalClose,
-	TransLocalCloseForCloning,
 };
 #endif /* LOCAL_TRANS_SCO */

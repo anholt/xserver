@@ -230,11 +230,6 @@ typedef struct _Xtransport {
     int	(*Close)(
 	XtransConnInfo		/* connection */
     );
-
-    int	(*CloseForCloning)(
-	XtransConnInfo		/* connection */
-    );
-
 } Xtransport;
 
 

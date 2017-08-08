@@ -818,20 +818,6 @@ TransClose(XtransConnInfo ciptr)
 }
 
 int
-TransCloseForCloning(XtransConnInfo ciptr)
-{
-    int ret;
-
-    prmsg (2,"CloseForCloning(%d)\n", ciptr->fd);
-
-    ret = ciptr->transptr->CloseForCloning (ciptr);
-
-    TransFreeConnInfo(ciptr);
-
-    return ret;
-}
-
-int
 TransIsLocal(XtransConnInfo ciptr)
 {
     return (ciptr->family == AF_UNIX);
