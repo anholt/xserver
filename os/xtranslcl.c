@@ -1155,13 +1155,13 @@ TransLocalEndTransports(void)
 #define TYPEBUFSIZE	32
 
 static XtransConnInfo
-TransLocalOpenServer(int type, const char *protocol,
-                       const char *host _X_UNUSED, const char *port)
+TransLocalOpenServer(const char *protocol,
+                     const char *host _X_UNUSED, const char *port)
 {
     int	i;
     XtransConnInfo ciptr;
 
-    prmsg(2,"LocalOpenServer(%d,%s,%s)\n", type, protocol, port);
+    prmsg(2, "LocalOpenServer(%s,%s)\n", protocol, port);
 
     /*
      * For X11, the port will be in the format xserverN where N is the
@@ -1181,19 +1181,9 @@ TransLocalOpenServer(int type, const char *protocol,
     {
 	if( strcmp(protocol,LOCALtrans2devtab[i].transname) != 0 )
 	    continue;
-	switch( type )
-	{
-	case XTRANS_OPEN_COTS_CLIENT:
-	    prmsg(1,
-		  "LocalOpenServer: Should not be opening a client with this function\n");
-	    break;
-	case XTRANS_OPEN_COTS_SERVER:
-	    ciptr->fd=LOCALtrans2devtab[i].devcotsopenserver(ciptr,port);
-	    break;
-	default:
-	    prmsg(1,"LocalOpenServer: Unknown Open type %d\n",
-		  type );
-	}
+
+        ciptr->fd=LOCALtrans2devtab[i].devcotsopenserver(ciptr,port);
+
 	if( ciptr->fd >= 0 ) {
 	    ciptr->priv=(char *)&LOCALtrans2devtab[i];
 	    ciptr->index=i;
@@ -1207,12 +1197,12 @@ TransLocalOpenServer(int type, const char *protocol,
 }
 
 static XtransConnInfo
-TransLocalReopenServer(int type, int index, int fd, const char *port)
+TransLocalReopenServer(int index, int fd, const char *port)
 {
     XtransConnInfo ciptr;
     int stat = 0;
 
-    prmsg(2,"LocalReopenServer(%d,%d,%d)\n", type, index, fd);
+    prmsg(2, "LocalReopenServer(%d,%d)\n", index, fd);
 
     if( (ciptr = calloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {
@@ -1223,15 +1213,7 @@ TransLocalReopenServer(int type, int index, int fd, const char *port)
 
     ciptr->fd = fd;
 
-    switch( type )
-    {
-    case XTRANS_OPEN_COTS_SERVER:
-	stat = LOCALtrans2devtab[index].devcotsreopenserver(ciptr,fd,port);
-	break;
-    default:
-	prmsg(1,"LocalReopenServer: Unknown Open type %d\n",
-	  type );
-    }
+    stat = LOCALtrans2devtab[index].devcotsreopenserver(ciptr,fd,port);
 
     if( stat > 0 ) {
 	ciptr->priv=(char *)&LOCALtrans2devtab[index];
@@ -1283,7 +1265,7 @@ TransLocalOpenCOTSServer(Xtransport *thistrans, const char *protocol,
 	return NULL;
     }
 
-    return TransLocalOpenServer(XTRANS_OPEN_COTS_SERVER, protocol, host, port);
+    return TransLocalOpenServer(protocol, host, port);
 }
 
 static XtransConnInfo

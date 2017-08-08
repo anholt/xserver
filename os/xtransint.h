@@ -143,9 +143,6 @@ struct _XtransConnInfo {
     struct _XtransConnFd        *send_fds;
 };
 
-#define XTRANS_OPEN_COTS_CLIENT       1
-#define XTRANS_OPEN_COTS_SERVER       2
-
 typedef struct _Xtransport {
     const char	*TransName;
     int		flags;

@@ -371,14 +371,14 @@ TransParseAddress(const char *address,
  * type of open to perform.
  */
 
-static XtransConnInfo
-TransOpen(int type, const char *address)
+XtransConnInfo
+TransOpenCOTSServer(const char *address)
 {
     char 		*protocol = NULL, *host = NULL, *port = NULL;
     XtransConnInfo	ciptr = NULL;
     Xtransport		*thistrans;
 
-    prmsg (2,"Open(%d,%s)\n", type, address);
+    prmsg(2, "OpenCOTSServer(%s)\n", address);
 
 #if defined(WIN32) && defined(TCPCONN)
     if (TransWSAStartup())
@@ -410,17 +410,7 @@ TransOpen(int type, const char *address)
     }
 
     /* Open the transport */
-
-    switch (type)
-    {
-    case XTRANS_OPEN_COTS_CLIENT:
-	break;
-    case XTRANS_OPEN_COTS_SERVER:
-	ciptr = thistrans->OpenCOTSServer(thistrans, protocol, host, port);
-	break;
-    default:
-	prmsg (1,"Open: Unknown Open type %d\n", type);
-    }
+    ciptr = thistrans->OpenCOTSServer(thistrans, protocol, host, port);
 
     if (ciptr == NULL)
     {
@@ -450,15 +440,15 @@ TransOpen(int type, const char *address)
  * pass file descriptors to the parent.
  */
 
-static XtransConnInfo
-TransReopen(int type, int trans_id, int fd, const char *port)
+XtransConnInfo
+TransReopenCOTSServer(int trans_id, int fd, const char *port)
 {
     XtransConnInfo	ciptr = NULL;
     Xtransport		*thistrans = NULL;
     char		*save_port;
     int			i;
 
-    prmsg (2,"Reopen(%d,%d,%s)\n", trans_id, fd, port);
+    prmsg(2, "ReopenCOTSServer(%d, %d,%s)\n", trans_id, fd, port);
 
     /* Determine the transport type */
 
@@ -486,14 +476,7 @@ TransReopen(int type, int trans_id, int fd, const char *port)
 
     /* Get a new XtransConnInfo object */
 
-    switch (type)
-    {
-    case XTRANS_OPEN_COTS_SERVER:
-	ciptr = thistrans->ReopenCOTSServer(thistrans, fd, port);
-	break;
-    default:
-	prmsg (1,"Reopen: Bad Open type %d\n", type);
-    }
+    ciptr = thistrans->ReopenCOTSServer(thistrans, fd, port);
 
     if (ciptr == NULL)
     {
@@ -513,20 +496,6 @@ TransReopen(int type, int trans_id, int fd, const char *port)
  * These are the only functions that should have knowledge of the transport
  * table.
  */
-
-XtransConnInfo
-TransOpenCOTSServer(const char *address)
-{
-    prmsg (2,"OpenCOTSServer(%s)\n", address);
-    return TransOpen(XTRANS_OPEN_COTS_SERVER, address);
-}
-
-XtransConnInfo
-TransReopenCOTSServer(int trans_id, int fd, const char *port)
-{
-    prmsg (2,"ReopenCOTSServer(%d, %d, %s)\n", trans_id, fd, port);
-    return TransReopen(XTRANS_OPEN_COTS_SERVER, trans_id, fd, port);
-}
 
 int
 TransSetOption(XtransConnInfo ciptr, int option, int arg)
