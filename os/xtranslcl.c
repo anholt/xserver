@@ -102,16 +102,12 @@ from The Open Group.
 /* Types of local connections supported:
  *  - PTS
  *  - named pipes
- *  - SCO
  */
 #if !defined(__sun)
 # define LOCAL_TRANS_PTS
 #endif
 #if defined(SVR4) || defined(__SVR4)
 # define LOCAL_TRANS_NAMED
-#endif
-#if defined(__SCO__) || defined(__UNIXWARE__)
-# define LOCAL_TRANS_SCO
 #endif
 
 static int TransLocalClose(XtransConnInfo ciptr);
@@ -215,7 +211,7 @@ TransFillAddrInfo(XtransConnInfo ciptr,
 #ifdef LOCAL_TRANS_PTS
 /* PTS */
 
-#if defined(SYSV) && !defined(__SCO__)
+#if defined(SYSV)
 #define SIGNAL_T int
 #else
 #define SIGNAL_T void
@@ -250,8 +246,6 @@ static void _dummy(int sig _X_UNUSED)
 #else
 #define NAMEDNODENAME "/dev/X/Nserver."
 
-#define SCORNODENAME	"/dev/X%1sR"
-#define SCOSNODENAME	"/dev/X%1sS"
 #endif /* !__sun */
 
 #ifdef LOCAL_TRANS_PTS
@@ -633,247 +627,6 @@ TransNAMEDAccept(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
 
 #endif /* LOCAL_TRANS_NAMED */
 
-#if defined(LOCAL_TRANS_SCO)
-
-/*
- * connect_spipe is used by the SCO connection type.
- */
-static int
-connect_spipe(int fd1, int fd2)
-{
-    long temp;
-    struct strfdinsert sbuf;
-
-    sbuf.databuf.maxlen = -1;
-    sbuf.databuf.len = -1;
-    sbuf.databuf.buf = NULL;
-    sbuf.ctlbuf.maxlen = sizeof(long);
-    sbuf.ctlbuf.len = sizeof(long);
-    sbuf.ctlbuf.buf = (caddr_t)&temp;
-    sbuf.offset = 0;
-    sbuf.fildes = fd2;
-    sbuf.flags = 0;
-
-    if( ioctl(fd1, I_FDINSERT, &sbuf) < 0 )
-	return(-1);
-
-    return(0);
-}
-
-/*
- * named_spipe is used by the SCO connection type.
- */
-
-static int
-named_spipe(int fd, char *path)
-
-{
-    int oldUmask, ret;
-    struct stat sbuf;
-
-    oldUmask = umask(0);
-
-    (void) fstat(fd, &sbuf);
-    ret = mknod(path, 0020666, sbuf.st_rdev);
-
-    umask(oldUmask);
-
-    if (ret < 0) {
-	ret = -1;
-    } else {
-	ret = fd;
-    }
-
-    return(ret);
-}
-
-/* SCO */
-
-/*
- * 2002-11-09 (jkj@sco.com)
- *
- * This code has been modified to match what is in the actual SCO X server.
- * This greatly helps inter-operability between X11R6 and X11R5 (the native
- * SCO server). Mainly, it relies on streams nodes existing in /dev, not
- * creating them or unlinking them, which breaks the native X server.
- *
- * However, this is only for the X protocol. For all other protocols, we
- * do in fact create the nodes, as only X11R6 will use them, and this makes
- * it possible to have both types of clients running, otherwise we get all
- * kinds of nasty errors on startup for anything that doesnt use the X
- * protocol (like SM, when KDE starts up).
- */
-
-static int
-TransSCOOpenServer(XtransConnInfo ciptr, const char *port)
-{
-#ifdef SCORNODENAME
-    char		serverR_path[64];
-    char		serverS_path[64];
-    struct flock	mylock;
-    int			fdr = -1;
-    int			fds = -1;
-#endif
-
-    prmsg(2,"SCOOpenServer(%s)\n", port);
-    if (!port || !port[0])
-	port = "0";
-
-#if !defined(SCORNODENAME)
-    prmsg(1,"SCOOpenServer: Protocol is not supported by a SCO connection\n");
-    return -1;
-#else
-    (void) sprintf(serverR_path, SCORNODENAME, port);
-    (void) sprintf(serverS_path, SCOSNODENAME, port);
-
-#if !defined(__SCO__)
-    unlink(serverR_path);
-    unlink(serverS_path);
-
-    if ((fds = open(DEV_SPX, O_RDWR)) < 0 ||
-	(fdr = open(DEV_SPX, O_RDWR)) < 0 ) {
-	prmsg(1,"SCOOpenServer: failed to open %s\n", DEV_SPX);
-	if (fds >= 0)
-		close(fds);
-	if (fdr >= 0)
-		close(fdr);
-	return -1;
-    }
-
-    if (named_spipe (fds, serverS_path) == -1) {
-	prmsg(1,"SCOOpenServer: failed to create %s\n", serverS_path);
-	close (fdr);
-	close (fds);
-	return -1;
-    }
-
-    if (named_spipe (fdr, serverR_path) == -1) {
-	prmsg(1,"SCOOpenServer: failed to create %s\n", serverR_path);
-	close (fdr);
-	close (fds);
-	return -1;
-    }
-#else /* __SCO__ */
-
-    fds = open (serverS_path, O_RDWR | O_NDELAY);
-    if (fds < 0) {
-	prmsg(1,"SCOOpenServer: failed to open %s\n", serverS_path);
-	return -1;
-    }
-
-    /*
-     * Lock the connection device for the duration of the server.
-     * This resolves multiple server starts especially on SMP machines.
-     */
-    mylock.l_type	= F_WRLCK;
-    mylock.l_whence	= 0;
-    mylock.l_start	= 0;
-    mylock.l_len	= 0;
-    if (fcntl (fds, F_SETLK, &mylock) < 0) {
-	prmsg(1,"SCOOpenServer: failed to lock %s\n", serverS_path);
-	close (fds);
-	return -1;
-    }
-
-    fdr = open (serverR_path, O_RDWR | O_NDELAY);
-    if (fdr < 0) {
-	prmsg(1,"SCOOpenServer: failed to open %s\n", serverR_path);
-	close (fds);
-	return -1;
-    }
-#endif /* __SCO__ */
-
-    if (connect_spipe(fds, fdr)) {
-	prmsg(1,"SCOOpenServer: ioctl(I_FDINSERT) failed on %s\n",
-	      serverS_path);
-	close (fdr);
-	close (fds);
-	return -1;
-    }
-
-    /*
-     * Everything looks good: fill in the XtransConnInfo structure.
-     */
-
-#if defined(__SCO__)
-    ciptr->flags |= TRANS_NOUNLINK;
-#endif
-    if (TransFillAddrInfo(ciptr, serverS_path, serverR_path) == 0) {
-	prmsg(1,"SCOOpenServer: failed to fill in addr info\n");
-	close(fds);
-	close(fdr);
-	return -1;
-    }
-
-    return(fds);
-
-#endif /* !SCORNODENAME */
-}
-
-static int
-TransSCOAccept(XtransConnInfo ciptr, XtransConnInfo newciptr, int *status)
-{
-    char		c;
-    int			fd;
-
-    prmsg(2,"SCOAccept(%d)\n", ciptr->fd);
-
-    if (read(ciptr->fd, &c, 1) < 0) {
-	prmsg(1,"SCOAccept: can't read from client\n");
-	*status = TRANS_ACCEPT_MISC_ERROR;
-	return(-1);
-    }
-
-    if( (fd = open(DEV_SPX, O_RDWR)) < 0 ) {
-	prmsg(1,"SCOAccept: can't open \"%s\"\n",DEV_SPX);
-	*status = TRANS_ACCEPT_MISC_ERROR;
-	return(-1);
-    }
-
-    if (connect_spipe (ciptr->fd, fd) < 0) {
-	prmsg(1,"SCOAccept: ioctl(I_FDINSERT) failed\n");
-	close (fd);
-	*status = TRANS_ACCEPT_MISC_ERROR;
-	return -1;
-    }
-
-    /*
-     * Everything looks good: fill in the XtransConnInfo structure.
-     */
-
-    newciptr->addrlen=ciptr->addrlen;
-    if( (newciptr->addr = malloc(newciptr->addrlen)) == NULL ) {
-	prmsg(1,
-	      "SCOAccept: failed to allocate memory for peer addr\n");
-	close(fd);
-	*status = TRANS_ACCEPT_BAD_MALLOC;
-	return -1;
-    }
-
-    memcpy(newciptr->addr,ciptr->addr,newciptr->addrlen);
-#if defined(__SCO__)
-    newciptr->flags |= TRANS_NOUNLINK;
-#endif
-
-    newciptr->peeraddrlen=newciptr->addrlen;
-    if( (newciptr->peeraddr = malloc(newciptr->peeraddrlen)) == NULL ) {
-	prmsg(1,
-	      "SCOAccept: failed to allocate memory for peer addr\n");
-	free(newciptr->addr);
-	close(fd);
-	*status = TRANS_ACCEPT_BAD_MALLOC;
-	return -1;
-    }
-
-    memcpy(newciptr->peeraddr,newciptr->addr,newciptr->peeraddrlen);
-
-    *status = 0;
-
-    return(fd);
-}
-
-#endif /* LOCAL_TRANS_SCO */
-
 #ifdef LOCAL_TRANS_PTS
 
 static int
@@ -953,42 +706,6 @@ TransNAMEDReopenServer(XtransConnInfo ciptr, int fd _X_UNUSED, const char *port)
 }
 
 #endif /* LOCAL_TRANS_NAMED */
-
-
-#ifdef LOCAL_TRANS_SCO
-static int
-TransSCOReopenServer(XtransConnInfo ciptr, int fd, const char *port)
-{
-#ifdef SCORNODENAME
-    char serverR_path[64], serverS_path[64];
-#endif
-
-    prmsg(2,"SCOReopenServer(%s)\n", port);
-    if (!port || !port[0])
-      port = "0";
-
-#if !defined(SCORNODENAME)
-    prmsg(2,"SCOReopenServer: Protocol is not supported by a SCO connection\n");
-    return 0;
-#else
-    (void) sprintf(serverR_path, SCORNODENAME, port);
-    (void) sprintf(serverS_path, SCOSNODENAME, port);
-
-#if defined(__SCO__)
-    ciptr->flags |= TRANS_NOUNLINK;
-#endif
-    if (TransFillAddrInfo(ciptr, serverS_path, serverR_path) == 0)
-    {
-	prmsg(1, "SCOReopenServer: failed to fill in addr info\n");
-	return 0;
-    }
-
-    return 1;
-
-#endif /* SCORNODENAME */
-}
-
-#endif /* LOCAL_TRANS_SCO */
 
 /*
  * This table contains all of the entry points for the different local
@@ -1098,18 +815,6 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 },
 #endif /* __sun */
 #endif /* LOCAL_TRANS_NAMED */
-
-
-#ifdef LOCAL_TRANS_SCO
-{"sco",
-     TransSCOOpenServer,
-     TransOpenFail,
-     TransSCOReopenServer,
-     TransReopenFail,
-     NULL,		/* ResetListener */
-     TransSCOAccept
-},
-#endif /* LOCAL_TRANS_SCO */
 };
 
 #define NUMTRANSPORTS	(sizeof(LOCALtrans2devtab)/sizeof(LOCALtrans2dev))
@@ -1118,11 +823,7 @@ static const char	*XLOCAL=NULL;
 static	char	*workingXLOCAL=NULL;
 static	char	*freeXLOCAL=NULL;
 
-#if defined(__SCO__)
-#define DEF_XLOCAL "SCO:UNIX:PTS"
-#elif defined(__UNIXWARE__)
-#define DEF_XLOCAL "UNIX:PTS:NAMED:SCO"
-#elif defined(__sun)
+#if defined(__sun)
 #define DEF_XLOCAL "UNIX:NAMED"
 #else
 #define DEF_XLOCAL "UNIX:PTS:NAMED:SCO"
@@ -1442,9 +1143,6 @@ static const char * local_aliases[] = {
 # ifdef __sun
 				  "pipe", /* compatibility with Solaris Xlib */
 # endif
-# ifdef LOCAL_TRANS_SCO
-				  "sco",
-# endif
 				  NULL };
 
 Xtransport	TransLocalFuncs = {
@@ -1547,29 +1245,3 @@ Xtransport	TransPIPEFuncs = {
 };
 #endif /* __sun */
 #endif /* LOCAL_TRANS_NAMED */
-
-
-#ifdef LOCAL_TRANS_SCO
-Xtransport	TransSCOFuncs = {
-	/* Local Interface */
-	"sco",
-	TRANS_LOCAL,
-	NULL,
-	TransLocalOpenCOTSServer,
-	TransLocalReopenCOTSServer,
-	TransLocalCreateListener,
-	TransLocalResetListener,
-	TransLocalAccept,
-	TransLocalBytesReadable,
-	TransLocalRead,
-	TransLocalWrite,
-	TransLocalReadv,
-	TransLocalWritev,
-#if XTRANS_SEND_FDS
-	TransLocalSendFdInvalid,
-	TransLocalRecvFdInvalid,
-#endif
-	TransLocalDisconnect,
-	TransLocalClose,
-};
-#endif /* LOCAL_TRANS_SCO */

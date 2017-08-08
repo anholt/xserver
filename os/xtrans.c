@@ -109,9 +109,6 @@ Xtransport_table Xtransports[] = {
 #ifdef __sun
     { &TransPIPEFuncs,	TRANS_LOCAL_PIPE_INDEX },
 #endif /* __sun */
-#if defined(__SCO__) || defined(__UNIXWARE__)
-    { &TransSCOFuncs,		TRANS_LOCAL_SCO_INDEX },
-#endif /* __SCO__ || __UNIXWARE__ */
 #endif /* LOCALCONN */
 };
 
@@ -1106,7 +1103,7 @@ static int TransWriteV(XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
 #endif /* WIN32 */
 
 
-#if defined(_POSIX_SOURCE) || defined(USG) || defined(SVR4) || defined(__SVR4) || defined(__SCO__)
+#if defined(_POSIX_SOURCE) || defined(USG) || defined(SVR4) || defined(__SVR4)
 #ifndef NEED_UTSNAME
 #define NEED_UTSNAME
 #endif
