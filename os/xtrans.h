@@ -169,15 +169,6 @@ XtransConnInfo TransReopenCOTSServer(
     const char *	/* port */
 );
 
-int TransGetReopenInfo(
-    XtransConnInfo,	/* ciptr */
-    int *,		/* trans_id */
-    int *,		/* fd */
-    char **		/* port */
-);
-
-
-
 int TransSetOption(
     XtransConnInfo,	/* ciptr */
     int,		/* option */
