@@ -806,37 +806,31 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
         mask &= ~index2;
         switch (index2) {
         case XSyncCACounter:
-            mask &= ~XSyncCACounter;
             /* sanity check in SyncInitTrigger */
             counter = *values++;
             break;
 
         case XSyncCAValueType:
-            mask &= ~XSyncCAValueType;
             /* sanity check in SyncInitTrigger */
             pAlarm->trigger.value_type = *values++;
             break;
 
         case XSyncCAValue:
-            mask &= ~XSyncCAValue;
             pAlarm->trigger.wait_value = ((int64_t)values[0] << 32) | values[1];
             values += 2;
             break;
 
         case XSyncCATestType:
-            mask &= ~XSyncCATestType;
             /* sanity check in SyncInitTrigger */
             pAlarm->trigger.test_type = *values++;
             break;
 
         case XSyncCADelta:
-            mask &= ~XSyncCADelta;
             pAlarm->delta = ((int64_t)values[0] << 32) | values[1];
             values += 2;
             break;
 
         case XSyncCAEvents:
-            mask &= ~XSyncCAEvents;
             if ((*values != xTrue) && (*values != xFalse)) {
                 client->errorValue = *values;
                 return BadValue;
