@@ -842,7 +842,7 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
             break;
 
         default:
-            client->errorValue = mask;
+            client->errorValue = index2;
             return BadValue;
         }
     }
