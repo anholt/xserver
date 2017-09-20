@@ -66,7 +66,7 @@ typedef XID RRProvider;
 
 extern int RREventBase, RRErrorBase;
 
-extern int (*ProcRandrVector[RRNumberRequests]) (ClientPtr);
+extern int (*ProcRandrVector[]) (ClientPtr);
 
 /*
  * Modeline for a monitor. Name follows directly after this struct

@@ -354,7 +354,7 @@ ProcCompositeReleaseOverlayWindow(ClientPtr client)
     return Success;
 }
 
-static int (*ProcCompositeVector[CompositeNumberRequests]) (ClientPtr) = {
+static int (*ProcCompositeVector[]) (ClientPtr) = {
 ProcCompositeQueryVersion,
         ProcCompositeRedirectWindow,
         ProcCompositeRedirectSubwindows,
@@ -369,10 +369,10 @@ ProcCompositeDispatch(ClientPtr client)
 {
     REQUEST(xReq);
 
-    if (stuff->data < CompositeNumberRequests)
-        return (*ProcCompositeVector[stuff->data]) (client);
-    else
+    if (stuff->data >= ARRAY_SIZE(ProcCompositeVector))
         return BadRequest;
+
+    return (*ProcCompositeVector[stuff->data]) (client);
 }
 
 static int _X_COLD
@@ -478,7 +478,7 @@ SProcCompositeReleaseOverlayWindow(ClientPtr client)
 }
 
 static int
-(*SProcCompositeVector[CompositeNumberRequests]) (ClientPtr) = {
+(*SProcCompositeVector[]) (ClientPtr) = {
     SProcCompositeQueryVersion,
     SProcCompositeRedirectWindow,
     SProcCompositeRedirectSubwindows,
@@ -495,10 +495,10 @@ SProcCompositeDispatch(ClientPtr client)
 {
     REQUEST(xReq);
 
-    if (stuff->data < CompositeNumberRequests)
-        return (*SProcCompositeVector[stuff->data]) (client);
-    else
+    if (stuff->data >= ARRAY_SIZE(SProcCompositeVector))
         return BadRequest;
+
+    return (*SProcCompositeVector[stuff->data]) (client);
 }
 
 /** @see GetDefaultBytes */
@@ -591,7 +591,7 @@ CompositeExtensionInit(void)
 #ifdef PANORAMIX
 #include "panoramiXsrv.h"
 
-int (*PanoramiXSaveCompositeVector[CompositeNumberRequests]) (ClientPtr);
+int (*PanoramiXSaveCompositeVector[ARRAY_SIZE(ProcCompositeVector)]) (ClientPtr);
 
 static int
 PanoramiXCompositeRedirectWindow(ClientPtr client)
@@ -909,7 +909,7 @@ PanoramiXCompositeInit(void)
 {
     int i;
 
-    for (i = 0; i < CompositeNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcCompositeVector); i++)
         PanoramiXSaveCompositeVector[i] = ProcCompositeVector[i];
     /*
      * Stuff in Xinerama aware request processing hooks
@@ -935,7 +935,7 @@ PanoramiXCompositeReset(void)
 {
     int i;
 
-    for (i = 0; i < CompositeNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcCompositeVector); i++)
         ProcCompositeVector[i] = PanoramiXSaveCompositeVector[i];
 }
 

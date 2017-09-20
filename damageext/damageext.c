@@ -466,7 +466,7 @@ static const int version_requests[] = {
 
 #define NUM_VERSION_REQUESTS	(sizeof (version_requests) / sizeof (version_requests[0]))
 
-static int (*ProcDamageVector[XDamageNumberRequests]) (ClientPtr) = {
+static int (*ProcDamageVector[]) (ClientPtr) = {
     /*************** Version 1 ******************/
     ProcDamageQueryVersion,
     ProcDamageCreate,
@@ -549,7 +549,7 @@ SProcDamageAdd(ClientPtr client)
     return (*ProcDamageVector[stuff->damageReqType]) (client);
 }
 
-static int (*SProcDamageVector[XDamageNumberRequests]) (ClientPtr) = {
+static int (*SProcDamageVector[]) (ClientPtr) = {
     /*************** Version 1 ******************/
     SProcDamageQueryVersion,
     SProcDamageCreate,
@@ -563,7 +563,7 @@ static int _X_COLD
 SProcDamageDispatch(ClientPtr client)
 {
     REQUEST(xDamageReq);
-    if (stuff->damageReqType >= XDamageNumberRequests)
+    if (stuff->damageReqType >= ARRAY_SIZE(SProcDamageVector))
         return BadRequest;
     return (*SProcDamageVector[stuff->damageReqType]) (client);
 }

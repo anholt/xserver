@@ -613,7 +613,7 @@ SProcRRDeleteMonitor(ClientPtr client) {
     return ProcRandrVector[stuff->randrReqType] (client);
 }
 
-int (*SProcRandrVector[RRNumberRequests]) (ClientPtr) = {
+int (*SProcRandrVector[]) (ClientPtr) = {
     SProcRRQueryVersion,        /* 0 */
 /* we skip 1 to make old clients fail pretty immediately */
         NULL,                   /* 1 SProcRandrOldGetScreenInfo */
@@ -671,7 +671,7 @@ int _X_COLD
 SProcRRDispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data >= RRNumberRequests || !SProcRandrVector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(SProcRandrVector))
         return BadRequest;
     UpdateCurrentTimeIf();
     return (*SProcRandrVector[stuff->data]) (client);

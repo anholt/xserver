@@ -90,7 +90,7 @@ ProcGEQueryVersion(ClientPtr client)
     return Success;
 }
 
-static int (*ProcGEVector[GENumberRequests]) (ClientPtr) = {
+static int (*ProcGEVector[]) (ClientPtr) = {
     /* Version 1.0 */
     ProcGEQueryVersion,
 };
@@ -110,7 +110,7 @@ SProcGEQueryVersion(ClientPtr client)
     return (*ProcGEVector[stuff->ReqType]) (client);
 }
 
-static int (*SProcGEVector[GENumberRequests]) (ClientPtr) = {
+static int (*SProcGEVector[]) (ClientPtr) = {
     /* Version 1.0 */
     SProcGEQueryVersion
 };
@@ -140,7 +140,7 @@ static int _X_COLD
 SProcGEDispatch(ClientPtr client)
 {
     REQUEST(xGEReq);
-    if (stuff->ReqType >= GENumberRequests)
+    if (stuff->ReqType >= ARRAY_SIZE(SProcGEVector))
         return BadRequest;
     return (*SProcGEVector[stuff->ReqType]) (client);
 }

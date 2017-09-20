@@ -107,7 +107,7 @@ static const int version_requests[] = {
 
 #define NUM_VERSION_REQUESTS	(sizeof (version_requests) / sizeof (version_requests[0]))
 
-int (*ProcXFixesVector[XFixesNumberRequests]) (ClientPtr) = {
+int (*ProcXFixesVector[]) (ClientPtr) = {
 /*************** Version 1 ******************/
     ProcXFixesQueryVersion,
         ProcXFixesChangeSaveSet,
@@ -167,7 +167,7 @@ SProcXFixesQueryVersion(ClientPtr client)
     return (*ProcXFixesVector[stuff->xfixesReqType]) (client);
 }
 
-static int (*SProcXFixesVector[XFixesNumberRequests]) (ClientPtr) = {
+static int (*SProcXFixesVector[]) (ClientPtr) = {
 /*************** Version 1 ******************/
     SProcXFixesQueryVersion,
         SProcXFixesChangeSaveSet,
@@ -207,7 +207,7 @@ static _X_COLD int
 SProcXFixesDispatch(ClientPtr client)
 {
     REQUEST(xXFixesReq);
-    if (stuff->xfixesReqType >= XFixesNumberRequests)
+    if (stuff->xfixesReqType >= ARRAY_SIZE(SProcXFixesVector))
         return BadRequest;
     return (*SProcXFixesVector[stuff->xfixesReqType]) (client);
 }
@@ -241,14 +241,14 @@ XFixesExtensionInit(void)
 
 #ifdef PANORAMIX
 
-int (*PanoramiXSaveXFixesVector[XFixesNumberRequests]) (ClientPtr);
+int (*PanoramiXSaveXFixesVector[ARRAY_SIZE(ProcXFixesVector)]) (ClientPtr);
 
 void
 PanoramiXFixesInit(void)
 {
     int i;
 
-    for (i = 0; i < XFixesNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcXFixesVector); i++)
         PanoramiXSaveXFixesVector[i] = ProcXFixesVector[i];
     /*
      * Stuff in Xinerama aware request processing hooks
@@ -265,7 +265,7 @@ PanoramiXFixesReset(void)
 {
     int i;
 
-    for (i = 0; i < XFixesNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcXFixesVector); i++)
         ProcXFixesVector[i] = PanoramiXSaveXFixesVector[i];
 }
 

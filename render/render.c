@@ -131,7 +131,7 @@ static int SProcRenderCreateConicalGradient(ClientPtr pClient);
 
 static int SProcRenderDispatch(ClientPtr pClient);
 
-int (*ProcRenderVector[RenderNumberRequests]) (ClientPtr) = {
+int (*ProcRenderVector[]) (ClientPtr) = {
 ProcRenderQueryVersion,
         ProcRenderQueryPictFormats,
         ProcRenderQueryPictIndexValues,
@@ -169,7 +169,7 @@ ProcRenderQueryVersion,
         ProcRenderCreateLinearGradient,
         ProcRenderCreateRadialGradient, ProcRenderCreateConicalGradient};
 
-int (*SProcRenderVector[RenderNumberRequests]) (ClientPtr) = {
+int (*SProcRenderVector[]) (ClientPtr) = {
 SProcRenderQueryVersion,
         SProcRenderQueryPictFormats,
         SProcRenderQueryPictIndexValues,
@@ -1976,7 +1976,7 @@ ProcRenderDispatch(ClientPtr client)
 {
     REQUEST(xReq);
 
-    if (stuff->data < RenderNumberRequests)
+    if (stuff->data < ARRAY_SIZE(ProcRenderVector))
         return (*ProcRenderVector[stuff->data]) (client);
     else
         return BadRequest;
@@ -2550,7 +2550,7 @@ SProcRenderDispatch(ClientPtr client)
 {
     REQUEST(xReq);
 
-    if (stuff->data < RenderNumberRequests)
+    if (stuff->data < ARRAY_SIZE(SProcRenderVector))
         return (*SProcRenderVector[stuff->data]) (client);
     else
         return BadRequest;
@@ -2572,7 +2572,7 @@ SProcRenderDispatch(ClientPtr client)
     } \
 } \
 
-int (*PanoramiXSaveRenderVector[RenderNumberRequests]) (ClientPtr);
+int (*PanoramiXSaveRenderVector[ARRAY_SIZE(ProcRenderVector)]) (ClientPtr);
 
 static int
 PanoramiXRenderCreatePicture(ClientPtr client)
@@ -3257,7 +3257,7 @@ PanoramiXRenderInit(void)
                                         "XineramaPicture");
     if (RenderErrBase)
         SetResourceTypeErrorValue(XRT_PICTURE, RenderErrBase + BadPicture);
-    for (i = 0; i < RenderNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcRenderVector); i++)
         PanoramiXSaveRenderVector[i] = ProcRenderVector[i];
     /*
      * Stuff in Xinerama aware request processing hooks
@@ -3299,7 +3299,7 @@ PanoramiXRenderReset(void)
 {
     int i;
 
-    for (i = 0; i < RenderNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(ProcRenderVector); i++)
         ProcRenderVector[i] = PanoramiXSaveRenderVector[i];
     RenderErrBase = 0;
 }

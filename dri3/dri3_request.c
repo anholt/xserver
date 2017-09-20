@@ -299,7 +299,7 @@ proc_dri3_fd_from_fence(ClientPtr client)
     return Success;
 }
 
-int (*proc_dri3_vector[DRI3NumberRequests]) (ClientPtr) = {
+int (*proc_dri3_vector[]) (ClientPtr) = {
     proc_dri3_query_version,            /* 0 */
     proc_dri3_open,                     /* 1 */
     proc_dri3_pixmap_from_buffer,       /* 2 */
@@ -314,7 +314,7 @@ proc_dri3_dispatch(ClientPtr client)
     REQUEST(xReq);
     if (!client->local)
         return BadMatch;
-    if (stuff->data >= DRI3NumberRequests || !proc_dri3_vector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(proc_dri3_vector))
         return BadRequest;
     return (*proc_dri3_vector[stuff->data]) (client);
 }
@@ -394,7 +394,7 @@ sproc_dri3_fd_from_fence(ClientPtr client)
     return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
 }
 
-int (*sproc_dri3_vector[DRI3NumberRequests]) (ClientPtr) = {
+int (*sproc_dri3_vector[]) (ClientPtr) = {
     sproc_dri3_query_version,           /* 0 */
     sproc_dri3_open,                    /* 1 */
     sproc_dri3_pixmap_from_buffer,      /* 2 */
@@ -409,7 +409,7 @@ sproc_dri3_dispatch(ClientPtr client)
     REQUEST(xReq);
     if (!client->local)
         return BadMatch;
-    if (stuff->data >= DRI3NumberRequests || !sproc_dri3_vector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(sproc_dri3_vector))
         return BadRequest;
     return (*sproc_dri3_vector[stuff->data]) (client);
 }

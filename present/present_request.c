@@ -232,7 +232,7 @@ proc_present_query_capabilities (ClientPtr client)
     return Success;
 }
 
-static int (*proc_present_vector[PresentNumberRequests]) (ClientPtr) = {
+static int (*proc_present_vector[]) (ClientPtr) = {
     proc_present_query_version,            /* 0 */
     proc_present_pixmap,                   /* 1 */
     proc_present_notify_msc,               /* 2 */
@@ -244,7 +244,7 @@ int
 proc_present_dispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data >= PresentNumberRequests || !proc_present_vector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(proc_present_vector))
         return BadRequest;
     return (*proc_present_vector[stuff->data]) (client);
 }
@@ -317,7 +317,7 @@ sproc_present_query_capabilities (ClientPtr client)
     return (*proc_present_vector[stuff->presentReqType]) (client);
 }
 
-static int (*sproc_present_vector[PresentNumberRequests]) (ClientPtr) = {
+static int (*sproc_present_vector[]) (ClientPtr) = {
     sproc_present_query_version,           /* 0 */
     sproc_present_pixmap,                  /* 1 */
     sproc_present_notify_msc,              /* 2 */
@@ -329,7 +329,7 @@ int _X_COLD
 sproc_present_dispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data >= PresentNumberRequests || !sproc_present_vector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(sproc_present_vector))
         return BadRequest;
     return (*sproc_present_vector[stuff->data]) (client);
 }

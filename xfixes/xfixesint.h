@@ -69,7 +69,7 @@ typedef struct _XFixesClient {
 
 #define GetXFixesClient(pClient) ((XFixesClientPtr)dixLookupPrivate(&(pClient)->devPrivates, XFixesClientPrivateKey))
 
-extern int (*ProcXFixesVector[XFixesNumberRequests]) (ClientPtr);
+extern int (*ProcXFixesVector[]) (ClientPtr);
 
 /* Save set */
 int
@@ -292,7 +292,7 @@ int
 
 /* Xinerama */
 #ifdef PANORAMIX
-extern int (*PanoramiXSaveXFixesVector[XFixesNumberRequests]) (ClientPtr);
+extern int (*PanoramiXSaveXFixesVector[]) (ClientPtr);
 void PanoramiXFixesInit(void);
 void PanoramiXFixesReset(void);
 #endif

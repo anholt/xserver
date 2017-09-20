@@ -57,7 +57,7 @@
 #include "mipict.h"
 #include "fbpict.h"
 
-extern int (*ProcRenderVector[RenderNumberRequests]) (ClientPtr);
+extern int (*ProcRenderVector[]) (ClientPtr);
 
 static int (*dmxSaveRenderVector[RenderNumberRequests]) (ClientPtr);
 
@@ -96,7 +96,7 @@ dmxInitRender(void)
 {
     int i;
 
-    for (i = 0; i < RenderNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(dmxSaveRenderVector); i++)
         dmxSaveRenderVector[i] = ProcRenderVector[i];
 
     ProcRenderVector[X_RenderCreateGlyphSet]
@@ -127,7 +127,7 @@ dmxResetRender(void)
 {
     int i;
 
-    for (i = 0; i < RenderNumberRequests; i++)
+    for (i = 0; i < ARRAY_SIZE(dmxSaveRenderVector); i++)
         ProcRenderVector[i] = dmxSaveRenderVector[i];
 }
 

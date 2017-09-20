@@ -207,7 +207,7 @@ ProcRRSelectInput(ClientPtr client)
     return Success;
 }
 
-int (*ProcRandrVector[RRNumberRequests]) (ClientPtr) = {
+int (*ProcRandrVector[]) (ClientPtr) = {
     ProcRRQueryVersion,         /* 0 */
 /* we skip 1 to make old clients fail pretty immediately */
         NULL,                   /* 1 ProcRandrOldGetScreenInfo */
@@ -265,7 +265,7 @@ int
 ProcRRDispatch(ClientPtr client)
 {
     REQUEST(xReq);
-    if (stuff->data >= RRNumberRequests || !ProcRandrVector[stuff->data])
+    if (stuff->data >= ARRAY_SIZE(ProcRandrVector))
         return BadRequest;
     UpdateCurrentTimeIf();
     return (*ProcRandrVector[stuff->data]) (client);
