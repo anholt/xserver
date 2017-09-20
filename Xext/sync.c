@@ -65,7 +65,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "pixmapstr.h"
 #include "resource.h"
 #include "opaque.h"
-#include <X11/extensions/syncproto.h>
 #include "syncsrv.h"
 #include "syncsdk.h"
 #include "protocol-versions.h"
@@ -113,6 +112,12 @@ static void SyncComputeBracketValues(SyncCounter *);
 static void SyncInitServerTime(void);
 
 static void SyncInitIdleTime(void);
+
+static xcb_sync_int64_t
+sync_int64_pack(CARD64 value)
+{
+    return (xcb_sync_int64_t) { .hi = value >> 32, .lo = value };
+}
 
 static inline void*
 SysCounterGetPrivate(SyncCounter *counter)
@@ -319,7 +324,7 @@ SyncInitTrigger(ClientPtr client, SyncTrigger * pTrigger, XID syncObject,
     int rc;
     Bool newSyncObject = FALSE;
 
-    if (changes & XSyncCACounter) {
+    if (changes & XCB_SYNC_CA_COUNTER) {
         if (syncObject == None)
             pSync = NULL;
         else if (Success != (rc = dixLookupResourceByType((void **) &pSync,
@@ -347,15 +352,15 @@ SyncInitTrigger(ClientPtr client, SyncTrigger * pTrigger, XID syncObject,
         }
     }
 
-    if (changes & XSyncCAValueType) {
-        if (pTrigger->value_type != XSyncRelative &&
-            pTrigger->value_type != XSyncAbsolute) {
+    if (changes & XCB_SYNC_CA_VALUE_TYPE) {
+        if (pTrigger->value_type != XCB_SYNC_VALUETYPE_RELATIVE &&
+            pTrigger->value_type != XCB_SYNC_VALUETYPE_ABSOLUTE) {
             client->errorValue = pTrigger->value_type;
             return BadValue;
         }
     }
 
-    if (changes & XSyncCATestType) {
+    if (changes & XCB_SYNC_CA_VALUE) {
 
         if (pSync && SYNC_FENCE == pSync->type) {
             pTrigger->CheckTrigger = SyncCheckTriggerFence;
@@ -364,16 +369,16 @@ SyncInitTrigger(ClientPtr client, SyncTrigger * pTrigger, XID syncObject,
             /* select appropriate CheckTrigger function */
 
             switch (pTrigger->test_type) {
-            case XSyncPositiveTransition:
+            case XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION:
                 pTrigger->CheckTrigger = SyncCheckTriggerPositiveTransition;
                 break;
-            case XSyncNegativeTransition:
+            case XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION:
                 pTrigger->CheckTrigger = SyncCheckTriggerNegativeTransition;
                 break;
-            case XSyncPositiveComparison:
+            case XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON:
                 pTrigger->CheckTrigger = SyncCheckTriggerPositiveComparison;
                 break;
-            case XSyncNegativeComparison:
+            case XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON:
                 pTrigger->CheckTrigger = SyncCheckTriggerNegativeComparison;
                 break;
             default:
@@ -383,8 +388,8 @@ SyncInitTrigger(ClientPtr client, SyncTrigger * pTrigger, XID syncObject,
         }
     }
 
-    if (changes & (XSyncCAValueType | XSyncCAValue)) {
-        if (pTrigger->value_type == XSyncAbsolute)
+    if (changes & (XCB_SYNC_CA_VALUE_TYPE | XCB_SYNC_CA_VALUE)) {
+        if (pTrigger->value_type == XCB_SYNC_VALUETYPE_ABSOLUTE)
             pTrigger->test_value = pTrigger->wait_value;
         else {                  /* relative */
             Bool overflow;
@@ -423,7 +428,7 @@ static void
 SyncSendAlarmNotifyEvents(SyncAlarm * pAlarm)
 {
     SyncAlarmClientList *pcl;
-    xSyncAlarmNotifyEvent ane;
+    xcb_sync_alarm_notify_event_t ane;
     SyncTrigger *pTrigger = &pAlarm->trigger;
     SyncCounter *pCounter;
 
@@ -434,23 +439,21 @@ SyncSendAlarmNotifyEvents(SyncAlarm * pAlarm)
 
     UpdateCurrentTime();
 
-    ane = (xSyncAlarmNotifyEvent) {
-        .type = SyncEventBase + XSyncAlarmNotify,
-        .kind = XSyncAlarmNotify,
+    ane = (xcb_sync_alarm_notify_event_t) {
+        .response_type = SyncEventBase + XCB_SYNC_ALARM_NOTIFY,
+        .kind = XCB_SYNC_ALARM_NOTIFY,
         .alarm = pAlarm->alarm_id,
-        .alarm_value_hi = pTrigger->test_value >> 32,
-        .alarm_value_lo = pTrigger->test_value,
-        .time = currentTime.milliseconds,
+        .alarm_value = sync_int64_pack(pTrigger->test_value),
+        .timestamp = currentTime.milliseconds,
         .state = pAlarm->state
     };
 
     if (pTrigger->pSync && SYNC_COUNTER == pTrigger->pSync->type) {
-        ane.counter_value_hi = pCounter->value >> 32;
-        ane.counter_value_lo = pCounter->value;
+        ane.counter_value = sync_int64_pack(pCounter->value);
     }
     else {
         /* XXX what else can we do if there's no counter? */
-        ane.counter_value_hi = ane.counter_value_lo = 0;
+        ane.counter_value = sync_int64_pack(0);
     }
 
     /* send to owner */
@@ -469,35 +472,32 @@ static void
 SyncSendCounterNotifyEvents(ClientPtr client, SyncAwait ** ppAwait,
                             int num_events)
 {
-    xSyncCounterNotifyEvent *pEvents, *pev;
+    xcb_sync_counter_notify_event_t *pEvents, *pev;
     int i;
 
     if (client->clientGone)
         return;
-    pev = pEvents = calloc(num_events, sizeof(xSyncCounterNotifyEvent));
+    pev = pEvents = calloc(num_events, sizeof(*pEvents));
     if (!pEvents)
         return;
     UpdateCurrentTime();
     for (i = 0; i < num_events; i++, ppAwait++, pev++) {
         SyncTrigger *pTrigger = &(*ppAwait)->trigger;
 
-        pev->type = SyncEventBase + XSyncCounterNotify;
-        pev->kind = XSyncCounterNotify;
+        pev->response_type = SyncEventBase + XCB_SYNC_COUNTER_NOTIFY;
+        pev->kind = XCB_SYNC_COUNTER_NOTIFY;
         pev->counter = pTrigger->pSync->id;
-        pev->wait_value_lo = pTrigger->test_value;
-        pev->wait_value_hi = pTrigger->test_value >> 32;
+        pev->wait_value = sync_int64_pack(pTrigger->test_value);
         if (SYNC_COUNTER == pTrigger->pSync->type) {
             SyncCounter *pCounter = (SyncCounter *) pTrigger->pSync;
 
-            pev->counter_value_lo = pCounter->value;
-            pev->counter_value_hi = pCounter->value >> 32;
+            pev->counter_value = sync_int64_pack(pCounter->value);
         }
         else {
-            pev->counter_value_lo = 0;
-            pev->counter_value_hi = 0;
+            pev->counter_value = sync_int64_pack(0);
         }
 
-        pev->time = currentTime.milliseconds;
+        pev->timestamp = currentTime.milliseconds;
         pev->count = num_events - i - 1;        /* events remaining */
         pev->destroyed = pTrigger->pSync->beingDestroyed;
     }
@@ -514,7 +514,7 @@ SyncAlarmCounterDestroyed(SyncTrigger * pTrigger)
 {
     SyncAlarm *pAlarm = (SyncAlarm *) pTrigger;
 
-    pAlarm->state = XSyncAlarmInactive;
+    pAlarm->state = XCB_SYNC_ALARMSTATE_INACTIVE;
     SyncSendAlarmNotifyEvents(pAlarm);
     pTrigger->pSync = NULL;
 }
@@ -535,7 +535,7 @@ SyncAlarmTriggerFired(SyncTrigger * pTrigger)
     pCounter = (SyncCounter *) pTrigger->pSync;
 
     /* no need to check alarm unless it's active */
-    if (pAlarm->state != XSyncAlarmActive)
+    if (pAlarm->state != XCB_SYNC_ALARMSTATE_ACTIVE)
         return;
 
     /*  " if the counter value is None, or if the delta is 0 and
@@ -545,14 +545,14 @@ SyncAlarmTriggerFired(SyncTrigger * pTrigger)
      */
     if (pCounter == NULL || (pAlarm->delta == 0
                              && (pAlarm->trigger.test_type ==
-                                 XSyncPositiveComparison ||
+                                 XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON ||
                                  pAlarm->trigger.test_type ==
-                                 XSyncNegativeComparison)))
-        pAlarm->state = XSyncAlarmInactive;
+                                 XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON)))
+        pAlarm->state = XCB_SYNC_ALARMSTATE_INACTIVE;
 
     new_test_value = pAlarm->trigger.test_value;
 
-    if (pAlarm->state == XSyncAlarmActive) {
+    if (pAlarm->state == XCB_SYNC_ALARMSTATE_ACTIVE) {
         Bool overflow;
         int64_t oldvalue;
         SyncTrigger *paTrigger = &pAlarm->trigger;
@@ -588,7 +588,7 @@ SyncAlarmTriggerFired(SyncTrigger * pTrigger)
          */
         if (overflow) {
             new_test_value = oldvalue;
-            pAlarm->state = XSyncAlarmInactive;
+            pAlarm->state = XCB_SYNC_ALARMSTATE_INACTIVE;
         }
     }
     /*  The AlarmNotify event has to have the "new state of the alarm"
@@ -671,12 +671,12 @@ SyncAwaitTriggerFired(SyncTrigger * pTrigger)
              *  event-threshold."
              */
 
-            if (((pAwait->trigger.test_type == XSyncPositiveComparison ||
-                  pAwait->trigger.test_type == XSyncPositiveTransition)
+            if (((pAwait->trigger.test_type == XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON ||
+                  pAwait->trigger.test_type == XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION)
                  && (diffgreater || diffequal))
                 ||
-                ((pAwait->trigger.test_type == XSyncNegativeComparison ||
-                  pAwait->trigger.test_type == XSyncNegativeTransition)
+                ((pAwait->trigger.test_type == XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON ||
+                  pAwait->trigger.test_type == XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION)
                  && (!diffgreater)      /* less or equal */
                 )
                 ) {
@@ -795,7 +795,7 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
                           CARD32 *values)
 {
     int status;
-    XSyncCounter counter;
+    xcb_sync_counter_t counter;
     Mask origmask = mask;
 
     counter = pAlarm->trigger.pSync ? pAlarm->trigger.pSync->id : None;
@@ -805,32 +805,32 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
 
         mask &= ~index2;
         switch (index2) {
-        case XSyncCACounter:
+        case XCB_SYNC_CA_COUNTER:
             /* sanity check in SyncInitTrigger */
             counter = *values++;
             break;
 
-        case XSyncCAValueType:
+        case XCB_SYNC_CA_VALUE_TYPE:
             /* sanity check in SyncInitTrigger */
             pAlarm->trigger.value_type = *values++;
             break;
 
-        case XSyncCAValue:
+        case XCB_SYNC_CA_VALUE:
             pAlarm->trigger.wait_value = ((int64_t)values[0] << 32) | values[1];
             values += 2;
             break;
 
-        case XSyncCATestType:
+        case XCB_SYNC_CA_TEST_TYPE:
             /* sanity check in SyncInitTrigger */
             pAlarm->trigger.test_type = *values++;
             break;
 
-        case XSyncCADelta:
+        case XCB_SYNC_CA_DELTA:
             pAlarm->delta = ((int64_t)values[0] << 32) | values[1];
             values += 2;
             break;
 
-        case XSyncCAEvents:
+        case XCB_SYNC_CA_EVENTS:
             if ((*values != xTrue) && (*values != xFalse)) {
                 client->errorValue = *values;
                 return BadValue;
@@ -845,6 +845,7 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
             client->errorValue = index2;
             return BadValue;
         }
+        mask &= ~index2;
     }
 
     /* "If the test-type is PositiveComparison or PositiveTransition
@@ -852,13 +853,13 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
      *  NegativeComparison or NegativeTransition and delta is
      *  greater than zero, a Match error is generated."
      */
-    if (origmask & (XSyncCADelta | XSyncCATestType)) {
-        if ((((pAlarm->trigger.test_type == XSyncPositiveComparison) ||
-              (pAlarm->trigger.test_type == XSyncPositiveTransition))
+    if (origmask & (XCB_SYNC_CA_DELTA | XCB_SYNC_CA_TEST_TYPE)) {
+        if ((((pAlarm->trigger.test_type == XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON) ||
+              (pAlarm->trigger.test_type == XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION))
              && pAlarm->delta < 0)
             ||
-            (((pAlarm->trigger.test_type == XSyncNegativeComparison) ||
-              (pAlarm->trigger.test_type == XSyncNegativeTransition))
+            (((pAlarm->trigger.test_type == XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON) ||
+              (pAlarm->trigger.test_type == XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION))
              && pAlarm->delta >= 0)
             ) {
             return BadMatch;
@@ -867,11 +868,11 @@ SyncChangeAlarmAttributes(ClientPtr client, SyncAlarm * pAlarm, Mask mask,
 
     /* postpone this until now, when we're sure nothing else can go wrong */
     if ((status = SyncInitTrigger(client, &pAlarm->trigger, counter, RTCounter,
-                                  origmask & XSyncCAAllTrigger)) != Success)
+                                  origmask & XCB_SYNC_CA_AllTrigger)) != Success)
         return status;
 
     /* XXX spec does not really say to do this - needs clarification */
-    pAlarm->state = XSyncAlarmActive;
+    pAlarm->state = XCB_SYNC_ALARMSTATE_ACTIVE;
     return Success;
 }
 
@@ -941,7 +942,7 @@ SyncFDFromFence(ClientPtr client, DrawablePtr pDraw, SyncFence *pFence)
 }
 
 static SyncCounter *
-SyncCreateCounter(ClientPtr client, XSyncCounter id, int64_t initialvalue)
+SyncCreateCounter(ClientPtr client, xcb_sync_counter_t id, int64_t initialvalue)
 {
     SyncCounter *pCounter;
 
@@ -1029,7 +1030,7 @@ SyncComputeBracketValues(SyncCounter * pCounter)
     for (pCur = pCounter->sync.pTriglist; pCur; pCur = pCur->next) {
         pTrigger = pCur->pTrigger;
 
-        if (pTrigger->test_type == XSyncPositiveComparison &&
+        if (pTrigger->test_type == XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON &&
             ct != XSyncCounterNeverIncreases) {
             if (pCounter->value < pTrigger->test_value &&
                 pTrigger->test_value < psci->bracket_greater) {
@@ -1042,7 +1043,7 @@ SyncComputeBracketValues(SyncCounter * pCounter)
                     pnewltval = &psci->bracket_less;
             }
         }
-        else if (pTrigger->test_type == XSyncNegativeComparison &&
+        else if (pTrigger->test_type == XCB_SYNC_TESTTYPE_NEGATIVE_COMPARISON &&
                  ct != XSyncCounterNeverDecreases) {
             if (pCounter->value > pTrigger->test_value &&
                 pTrigger->test_value > psci->bracket_less) {
@@ -1055,7 +1056,7 @@ SyncComputeBracketValues(SyncCounter * pCounter)
                     pnewgtval = &psci->bracket_greater;
             }
         }
-        else if (pTrigger->test_type == XSyncNegativeTransition &&
+        else if (pTrigger->test_type == XCB_SYNC_TESTTYPE_NEGATIVE_TRANSITION &&
                  ct != XSyncCounterNeverIncreases) {
             if (pCounter->value >= pTrigger->test_value &&
                 pTrigger->test_value > psci->bracket_less) {
@@ -1073,7 +1074,7 @@ SyncComputeBracketValues(SyncCounter * pCounter)
                     pnewgtval = &psci->bracket_greater;
             }
         }
-        else if (pTrigger->test_type == XSyncPositiveTransition &&
+        else if (pTrigger->test_type == XCB_SYNC_TESTTYPE_POSITIVE_TRANSITION &&
                  ct != XSyncCounterNeverDecreases) {
             if (pCounter->value <= pTrigger->test_value &&
                 pTrigger->test_value < psci->bracket_greater) {
@@ -1108,7 +1109,7 @@ FreeAlarm(void *addr, XID id)
 {
     SyncAlarm *pAlarm = (SyncAlarm *) addr;
 
-    pAlarm->state = XSyncAlarmDestroyed;
+    pAlarm->state = XCB_SYNC_ALARMSTATE_DESTROYED;
 
     SyncSendAlarmNotifyEvents(pAlarm);
 
@@ -1210,15 +1211,15 @@ FreeAlarmClient(void *value, XID id)
 static int
 ProcSyncInitialize(ClientPtr client)
 {
-    xSyncInitializeReply rep = {
-        .type = X_Reply,
-        .sequenceNumber = client->sequence,
+    xcb_sync_initialize_reply_t rep = {
+        .response_type = X_Reply,
+        .sequence = client->sequence,
         .length = 0,
-        .majorVersion = SERVER_SYNC_MAJOR_VERSION,
-        .minorVersion = SERVER_SYNC_MINOR_VERSION,
+        .major_version = SERVER_SYNC_MAJOR_VERSION,
+        .minor_version = SERVER_SYNC_MINOR_VERSION,
     };
 
-    REQUEST_SIZE_MATCH(xSyncInitializeReq);
+    REQUEST_SIZE_MATCH(xcb_sync_initialize_request_t);
 
     if (client->swapped) {
         swaps(&rep.sequenceNumber);
@@ -1234,7 +1235,7 @@ static int
 ProcSyncListSystemCounters(ClientPtr client)
 {
     xSyncListSystemCountersReply rep = {
-        .type = X_Reply,
+        .response_type = X_Reply,
         .sequenceNumber = client->sequence,
         .nCounters = 0,
     };
@@ -1242,8 +1243,8 @@ ProcSyncListSystemCounters(ClientPtr client)
     int len = 0;
     xSyncSystemCounter *list = NULL, *walklist = NULL;
 
-    REQUEST_SIZE_MATCH(xSyncListSystemCountersReq);
-
+    REQUEST_SIZE_MATCH(xcb_sync_list_system_counters_request_t);
+c
     xorg_list_for_each_entry(psci, &SysCounterList, entry) {
         /* pad to 4 byte boundary */
         len += pad_to_int32(sz_xSyncSystemCounter + strlen(psci->name));
@@ -1591,7 +1592,7 @@ ProcSyncAwait(ClientPtr client)
 
         status = SyncInitTrigger(client, &pAwait->trigger,
                                  pProtocolWaitConds->counter, RTCounter,
-                                 XSyncCAAllTrigger);
+                                 XCB_SYNC_CA_AllTrigger);
         if (status != Success) {
             /*  this should take care of removing any triggers created by
              *  this request that have already been registered on sync objects
@@ -1676,7 +1677,7 @@ ProcSyncCreateAlarm(ClientPtr client)
     vmask = stuff->valueMask;
     len = client->req_len - bytes_to_int32(sizeof(xSyncCreateAlarmReq));
     /* the "extra" call to Ones accounts for the presence of 64 bit values */
-    if (len != (Ones(vmask) + Ones(vmask & (XSyncCAValue | XSyncCADelta))))
+    if (len != (Ones(vmask) + Ones(vmask & (XCB_SYNC_CA_Value | XCB_SYNC_CA_Delta))))
         return BadLength;
 
     if (!(pAlarm = malloc(sizeof(SyncAlarm)))) {
@@ -1689,11 +1690,11 @@ ProcSyncCreateAlarm(ClientPtr client)
     pTrigger->pSync = NULL;
     pTrigger->value_type = XSyncAbsolute;
     pTrigger->wait_value = 0;
-    pTrigger->test_type = XSyncPositiveComparison;
+    pTrigger->test_type = XCB_SYNC_TESTTYPE_POSITIVE_COMPARISON;
     pTrigger->TriggerFired = SyncAlarmTriggerFired;
     pTrigger->CounterDestroyed = SyncAlarmCounterDestroyed;
     status = SyncInitTrigger(client, pTrigger, None, RTCounter,
-                             XSyncCAAllTrigger);
+                             XCB_SYNC_CA_AllTrigger);
     if (status != Success) {
         free(pAlarm);
         return status;
@@ -1703,7 +1704,7 @@ ProcSyncCreateAlarm(ClientPtr client)
     pAlarm->alarm_id = stuff->id;
     pAlarm->delta = 1;
     pAlarm->events = TRUE;
-    pAlarm->state = XSyncAlarmInactive;
+    pAlarm->state = XCB_SYNC_ALARMSTATE_INACTIVE;
     pAlarm->pEventClients = NULL;
     status = SyncChangeAlarmAttributes(client, pAlarm, vmask,
                                        (CARD32 *) &stuff[1]);
@@ -1720,7 +1721,7 @@ ProcSyncCreateAlarm(ClientPtr client)
      */
 
     if (!pTrigger->pSync) {
-        pAlarm->state = XSyncAlarmInactive;     /* XXX protocol change */
+        pAlarm->state = XCB_SYNC_ALARMSTATE_INACTIVE; /* XXX protocol change */
     }
     else {
         SyncCounter *pCounter;
@@ -1762,7 +1763,7 @@ ProcSyncChangeAlarm(ClientPtr client)
     vmask = stuff->valueMask;
     len = client->req_len - bytes_to_int32(sizeof(xSyncChangeAlarmReq));
     /* the "extra" call to Ones accounts for the presence of 64 bit values */
-    if (len != (Ones(vmask) + Ones(vmask & (XSyncCAValue | XSyncCADelta))))
+    if (len != (Ones(vmask) + Ones(vmask & (XCB_SYNC_CA_Value | XCB_SYNC_CA_Delta))))
         return BadLength;
 
     if ((status = SyncChangeAlarmAttributes(client, pAlarm, vmask,
@@ -2058,7 +2059,7 @@ ProcSyncAwaitFence(ClientPtr client)
         pAwait->trigger.test_type = 0;
 
         status = SyncInitTrigger(client, &pAwait->trigger,
-                                 *pProtocolFences, RTFence, XSyncCAAllTrigger);
+                                 *pProtocolFences, RTFence, XCB_SYNC_CA_AllTrigger);
         if (status != Success) {
             /*  this should take care of removing any triggers created by
              *  this request that have already been registered on sync objects
@@ -2499,9 +2500,9 @@ SyncExtensionInit(void)
 
     SyncEventBase = extEntry->eventBase;
     SyncErrorBase = extEntry->errorBase;
-    EventSwapVector[SyncEventBase + XSyncCounterNotify] =
+    EventSwapVector[SyncEventBase + XCB_SYNC_COUNTER_NOTIFY] =
         (EventSwapPtr) SCounterNotifyEvent;
-    EventSwapVector[SyncEventBase + XSyncAlarmNotify] =
+    EventSwapVector[SyncEventBase + XCB_SYNC_ALARM_NOTIFY] =
         (EventSwapPtr) SAlarmNotifyEvent;
 
     SetResourceTypeErrorValue(RTCounter, SyncErrorBase + XSyncBadCounter);

@@ -54,6 +54,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "list.h"
 #include "misync.h"
 #include "misyncstr.h"
+#include "xcb/sync.h"
 
 /*
  * The System Counter interface
@@ -96,7 +97,7 @@ typedef struct _SyncAlarmClientList {
 typedef struct _SyncAlarm {
     SyncTrigger trigger;
     ClientPtr client;
-    XSyncAlarm alarm_id;
+    xcb_sync_alarm_t alarm_id;
     int64_t delta;
     int events;
     int state;

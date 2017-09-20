@@ -32,7 +32,6 @@
 #include "dix.h"
 #include "misync.h"
 #include "scrnintstr.h"
-#include <X11/extensions/syncconst.h>
 
 /* Sync object types */
 #define SYNC_COUNTER		0
