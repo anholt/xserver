@@ -32,6 +32,10 @@
 #include <randrstr.h>
 #include "dri3.h"
 
+#define DRI3_NAME "DRI3"
+#define DRI3NumberErrors 0
+#define DRI3NumberEvents 0
+
 extern DevPrivateKeyRec dri3_screen_private_key;
 
 typedef struct dri3_screen_priv {

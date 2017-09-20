@@ -172,7 +172,6 @@ extern void XvMCExtensionInit(void);
 #endif
 
 #if defined(DRI3)
-#include <X11/extensions/dri3proto.h>
 extern void dri3_extension_init(void);
 #endif
 

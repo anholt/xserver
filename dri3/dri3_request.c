@@ -24,6 +24,7 @@
 #include <xorg-config.h>
 #endif
 
+#include "xcb/dri3.h"
 #include "dri3_priv.h"
 #include <syncsrv.h>
 #include <unistd.h>
@@ -34,22 +35,22 @@
 static int
 proc_dri3_query_version(ClientPtr client)
 {
-    REQUEST(xDRI3QueryVersionReq);
-    xDRI3QueryVersionReply rep = {
-        .type = X_Reply,
-        .sequenceNumber = client->sequence,
+    REQUEST(xcb_dri3_query_version_request_t);
+    xcb_dri3_query_version_reply_t rep = {
+        .response_type = X_Reply,
+        .sequence = client->sequence,
         .length = 0,
-        .majorVersion = SERVER_DRI3_MAJOR_VERSION,
-        .minorVersion = SERVER_DRI3_MINOR_VERSION
+        .major_version = SERVER_DRI3_MAJOR_VERSION,
+        .minor_version = SERVER_DRI3_MINOR_VERSION
     };
 
-    REQUEST_SIZE_MATCH(xDRI3QueryVersionReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_query_version_request_t);
     (void) stuff;
     if (client->swapped) {
-        swaps(&rep.sequenceNumber);
+        swaps(&rep.sequence);
         swapl(&rep.length);
-        swapl(&rep.majorVersion);
-        swapl(&rep.minorVersion);
+        swapl(&rep.major_version);
+        swapl(&rep.minor_version);
     }
     WriteToClient(client, sizeof(rep), &rep);
     return Success;
@@ -58,15 +59,15 @@ proc_dri3_query_version(ClientPtr client)
 int
 dri3_send_open_reply(ClientPtr client, int fd)
 {
-    xDRI3OpenReply rep = {
-        .type = X_Reply,
+    xcb_dri3_open_reply_t rep = {
+        .response_type = X_Reply,
         .nfd = 1,
-        .sequenceNumber = client->sequence,
+        .sequence = client->sequence,
         .length = 0,
     };
 
     if (client->swapped) {
-        swaps(&rep.sequenceNumber);
+        swaps(&rep.sequence);
         swapl(&rep.length);
     }
 
@@ -83,14 +84,14 @@ dri3_send_open_reply(ClientPtr client, int fd)
 static int
 proc_dri3_open(ClientPtr client)
 {
-    REQUEST(xDRI3OpenReq);
+    REQUEST(xcb_dri3_open_request_t);
     RRProviderPtr provider;
     DrawablePtr drawable;
     ScreenPtr screen;
     int fd;
     int status;
 
-    REQUEST_SIZE_MATCH(xDRI3OpenReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_open_request_t);
 
     status = dixLookupDrawable(&drawable, stuff->drawable, client, 0, DixReadAccess);
     if (status != Success)
@@ -120,14 +121,14 @@ proc_dri3_open(ClientPtr client)
 static int
 proc_dri3_pixmap_from_buffer(ClientPtr client)
 {
-    REQUEST(xDRI3PixmapFromBufferReq);
+    REQUEST(xcb_dri3_pixmap_from_buffer_request_t);
     int fd;
     DrawablePtr drawable;
     PixmapPtr pixmap;
     int rc;
 
     SetReqFds(client, 1);
-    REQUEST_SIZE_MATCH(xDRI3PixmapFromBufferReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_pixmap_from_buffer_request_t);
     LEGAL_NEW_RESOURCE(stuff->pixmap, client);
     rc = dixLookupDrawable(&drawable, stuff->drawable, client, M_ANY, DixGetAttrAccess);
     if (rc != Success) {
@@ -187,18 +188,18 @@ proc_dri3_pixmap_from_buffer(ClientPtr client)
 static int
 proc_dri3_buffer_from_pixmap(ClientPtr client)
 {
-    REQUEST(xDRI3BufferFromPixmapReq);
-    xDRI3BufferFromPixmapReply rep = {
-        .type = X_Reply,
+    REQUEST(xcb_dri3_buffer_from_pixmap_request_t);
+    xcb_dri3_buffer_from_pixmap_reply_t rep = {
+        .response_type = X_Reply,
         .nfd = 1,
-        .sequenceNumber = client->sequence,
+        .sequence = client->sequence,
         .length = 0,
     };
     int rc;
     int fd;
     PixmapPtr pixmap;
 
-    REQUEST_SIZE_MATCH(xDRI3BufferFromPixmapReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_buffer_from_pixmap_request_t);
     rc = dixLookupResourceByType((void **) &pixmap, stuff->pixmap, RT_PIXMAP,
                                  client, DixWriteAccess);
     if (rc != Success) {
@@ -216,7 +217,7 @@ proc_dri3_buffer_from_pixmap(ClientPtr client)
         return rc;
 
     if (client->swapped) {
-        swaps(&rep.sequenceNumber);
+        swaps(&rep.sequence);
         swapl(&rep.length);
         swapl(&rep.size);
         swaps(&rep.width);
@@ -236,13 +237,13 @@ proc_dri3_buffer_from_pixmap(ClientPtr client)
 static int
 proc_dri3_fence_from_fd(ClientPtr client)
 {
-    REQUEST(xDRI3FenceFromFDReq);
+    REQUEST(xcb_dri3_fence_from_fd_request_t);
     DrawablePtr drawable;
     int fd;
     int status;
 
     SetReqFds(client, 1);
-    REQUEST_SIZE_MATCH(xDRI3FenceFromFDReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_fence_from_fd_request_t);
     LEGAL_NEW_RESOURCE(stuff->fence, client);
 
     status = dixLookupDrawable(&drawable, stuff->drawable, client, M_ANY, DixGetAttrAccess);
@@ -262,11 +263,11 @@ proc_dri3_fence_from_fd(ClientPtr client)
 static int
 proc_dri3_fd_from_fence(ClientPtr client)
 {
-    REQUEST(xDRI3FDFromFenceReq);
-    xDRI3FDFromFenceReply rep = {
-        .type = X_Reply,
+    REQUEST(xcb_dri3_fd_from_fence_request_t);
+    xcb_dri3_fd_from_fence_reply_t rep = {
+        .response_type = X_Reply,
         .nfd = 1,
-        .sequenceNumber = client->sequence,
+        .sequence = client->sequence,
         .length = 0,
     };
     DrawablePtr drawable;
@@ -274,7 +275,7 @@ proc_dri3_fd_from_fence(ClientPtr client)
     int status;
     SyncFence *fence;
 
-    REQUEST_SIZE_MATCH(xDRI3FDFromFenceReq);
+    REQUEST_SIZE_MATCH(xcb_dri3_fd_from_fence_request_t);
 
     status = dixLookupDrawable(&drawable, stuff->drawable, client, M_ANY, DixGetAttrAccess);
     if (status != Success)
@@ -288,7 +289,7 @@ proc_dri3_fd_from_fence(ClientPtr client)
         return BadMatch;
 
     if (client->swapped) {
-        swaps(&rep.sequenceNumber);
+        swaps(&rep.sequence);
         swapl(&rep.length);
     }
     if (WriteFdToClient(client, fd, FALSE) < 0)
@@ -322,32 +323,32 @@ proc_dri3_dispatch(ClientPtr client)
 static int _X_COLD
 sproc_dri3_query_version(ClientPtr client)
 {
-    REQUEST(xDRI3QueryVersionReq);
-    REQUEST_SIZE_MATCH(xDRI3QueryVersionReq);
+    REQUEST(xcb_dri3_query_version_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_query_version_request_t);
 
     swaps(&stuff->length);
-    swapl(&stuff->majorVersion);
-    swapl(&stuff->minorVersion);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    swapl(&stuff->major_version);
+    swapl(&stuff->minor_version);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 static int _X_COLD
 sproc_dri3_open(ClientPtr client)
 {
-    REQUEST(xDRI3OpenReq);
-    REQUEST_SIZE_MATCH(xDRI3OpenReq);
+    REQUEST(xcb_dri3_open_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_open_request_t);
 
     swaps(&stuff->length);
     swapl(&stuff->drawable);
     swapl(&stuff->provider);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 static int _X_COLD
 sproc_dri3_pixmap_from_buffer(ClientPtr client)
 {
-    REQUEST(xDRI3PixmapFromBufferReq);
-    REQUEST_SIZE_MATCH(xDRI3PixmapFromBufferReq);
+    REQUEST(xcb_dri3_pixmap_from_buffer_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_pixmap_from_buffer_request_t);
 
     swaps(&stuff->length);
     swapl(&stuff->pixmap);
@@ -356,42 +357,42 @@ sproc_dri3_pixmap_from_buffer(ClientPtr client)
     swaps(&stuff->width);
     swaps(&stuff->height);
     swaps(&stuff->stride);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 static int _X_COLD
 sproc_dri3_buffer_from_pixmap(ClientPtr client)
 {
-    REQUEST(xDRI3BufferFromPixmapReq);
-    REQUEST_SIZE_MATCH(xDRI3BufferFromPixmapReq);
+    REQUEST(xcb_dri3_buffer_from_pixmap_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_buffer_from_pixmap_request_t);
 
     swaps(&stuff->length);
     swapl(&stuff->pixmap);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 static int _X_COLD
 sproc_dri3_fence_from_fd(ClientPtr client)
 {
-    REQUEST(xDRI3FenceFromFDReq);
-    REQUEST_SIZE_MATCH(xDRI3FenceFromFDReq);
+    REQUEST(xcb_dri3_fence_from_fd_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_fence_from_fd_request_t);
 
     swaps(&stuff->length);
     swapl(&stuff->drawable);
     swapl(&stuff->fence);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 static int _X_COLD
 sproc_dri3_fd_from_fence(ClientPtr client)
 {
-    REQUEST(xDRI3FDFromFenceReq);
-    REQUEST_SIZE_MATCH(xDRI3FDFromFenceReq);
+    REQUEST(xcb_dri3_fd_from_fence_request_t);
+    REQUEST_SIZE_MATCH(xcb_dri3_fd_from_fence_request_t);
 
     swaps(&stuff->length);
     swapl(&stuff->drawable);
     swapl(&stuff->fence);
-    return (*proc_dri3_vector[stuff->dri3ReqType]) (client);
+    return (*proc_dri3_vector[stuff->minor_opcode]) (client);
 }
 
 int (*sproc_dri3_vector[]) (ClientPtr) = {
