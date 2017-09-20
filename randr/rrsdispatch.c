@@ -666,3 +666,13 @@ int (*SProcRandrVector[RRNumberRequests]) (ClientPtr) = {
         SProcRRSetMonitor,             /* 43 */
         SProcRRDeleteMonitor,          /* 44 */
 };
+
+int _X_COLD
+SProcRRDispatch(ClientPtr client)
+{
+    REQUEST(xReq);
+    if (stuff->data >= RRNumberRequests || !SProcRandrVector[stuff->data])
+        return BadRequest;
+    UpdateCurrentTimeIf();
+    return (*SProcRandrVector[stuff->data]) (client);
+}

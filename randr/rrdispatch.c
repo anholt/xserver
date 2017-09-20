@@ -260,3 +260,13 @@ int (*ProcRandrVector[RRNumberRequests]) (ClientPtr) = {
         ProcRRSetMonitor,             /* 43 */
         ProcRRDeleteMonitor,          /* 44 */
 };
+
+int
+ProcRRDispatch(ClientPtr client)
+{
+    REQUEST(xReq);
+    if (stuff->data >= RRNumberRequests || !ProcRandrVector[stuff->data])
+        return BadRequest;
+    UpdateCurrentTimeIf();
+    return (*ProcRandrVector[stuff->data]) (client);
+}

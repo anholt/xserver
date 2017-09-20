@@ -67,7 +67,6 @@ typedef XID RRProvider;
 extern int RREventBase, RRErrorBase;
 
 extern int (*ProcRandrVector[RRNumberRequests]) (ClientPtr);
-extern int (*SProcRandrVector[RRNumberRequests]) (ClientPtr);
 
 /*
  * Modeline for a monitor. Name follows directly after this struct
@@ -768,6 +767,9 @@ void
 /* rrdispatch.c */
 extern _X_EXPORT Bool
  RRClientKnowsRates(ClientPtr pClient);
+
+int ProcRRDispatch(ClientPtr pClient);
+int SProcRRDispatch(ClientPtr pClient);
 
 /* rrmode.c */
 /*
